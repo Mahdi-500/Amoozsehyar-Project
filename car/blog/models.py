@@ -9,6 +9,7 @@ class SignUp(models.Model):
     class GenderChoices(models.TextChoices):
         FEMALE = "FE", ("Female")
         MALE = "MA", ("Male")
+        CORROSAN = 'CR', ("Corrosan")
     
     # ? user info
     user = models.OneToOneField(User, on_delete=models.CASCADE, default=None, unique=True)
@@ -77,4 +78,3 @@ class Post(models.Model):
 
     def get_absolute_url(self):
         return reverse("blog:detail", args=[self.id])
-    
