@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}detail{% endblock title %}
+
+{% block content %}
+    <h2>description:</h2>
+    <h3>{{post.description}}</h3>
+    <br><br>
+
+    <h2>engine type:</h2>
+    <h3>{{post.engine_type}}</h3>
+    <br><br>
+
+    {{post.created}}
+{% endblock content %}

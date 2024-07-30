@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Main Page{% endblock title %}
+
+{% block content %}
+    {{message}}
+
+    {% include "post_list.html" with post=post %}
+    <br><br>
+
+    <h3>
+        <a href="{% url "blog:add post" username%}">add post</a>
+    </h3>
+
+{% endblock content %}

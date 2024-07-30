@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Sign up{% endblock title %}
+
+{% block content %}
+
+    <form method = "Post">
+        Sign up
+        {% csrf_token %}
+        {{form.as_p}}
+        <button type="submit">sign up</button>
+    </form>
+    {{message}}
+    <br>
+    have an account? <a href="{% url "blog:login" %}">login</a>
+{% endblock content %}
