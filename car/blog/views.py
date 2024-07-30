@@ -6,6 +6,11 @@ from .forms import SignUpForm, LoginForm, PostFrom
 from .models import SignUp, Post
 
 # Create your views here.
+def Mainview(request):
+    posts = Post.Publish.all()
+    return render(request, "main.html", {"post":posts})
+
+
 def signupView(request):
     
     if request.method == "POST":
@@ -79,7 +84,7 @@ def AddPostview(request, username):
         return render(request, "profile.html", {"username":username})
     else:
         form = PostFrom()
-        return render(request, "add_post.html", {"form": form})
+        return render(request, "forms/add_post.html", {"form": form})
 
 
 def PostListview(request, username):
