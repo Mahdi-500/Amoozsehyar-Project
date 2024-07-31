@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model, authenticate
+from django.core.paginator import Paginator
 from django.db import IntegrityError
 from .forms import SignUpForm, LoginForm, PostFrom
 from .models import SignUp, Post
@@ -8,6 +9,11 @@ from .models import SignUp, Post
 # Create your views here.
 def Mainview(request):
     posts = Post.Publish.all()
+    page = Paginator(posts,2)
+    page_number = request.GET.get("page", 1)
+    posts = page.page(page_number)
+    print(posts.next_page_number)
+    
     return render(request, "main.html", {"post":posts})
 
 
