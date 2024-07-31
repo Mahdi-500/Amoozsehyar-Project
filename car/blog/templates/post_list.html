@@ -7,11 +7,12 @@
     <br><br>
     {% if post %}
         {% for post in post %}
-            <a href="{% url "blog:post detail" username post.id%}">{{post.title}}</a>
+            <a href="{{post.get_absolute_url}}">{{post.title}}</a>
             <br><br>
         {% endfor %}
     {% else %}
         <h3>no posts yet</h3>
     {% endif %}
+    
 {% endblock content %}
 
