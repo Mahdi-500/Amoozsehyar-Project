@@ -3,11 +3,17 @@
 {% block title %}Main page{% endblock title %}
 
 {% block content %}
-    {% for post in post %}
-        <h3><a href="{% url "blog:post detail" post.author post.id%}">{{post.title}}</a></h3>
-        <h4>author: {{post.author.name}}</h4>
-    {% endfor %}
+    {% if post %}
+        {% for post in post %}
+            <h3><a href="{{post.get_absolute_url}}">{{post.title}}</a></h3>
+            <h4>author: {{post.author.name}}</h4>
+            {% endfor %}
 
+    {% else %}
+        <h3>no posts yet</h3>
+    {% endif %}
+    
+    {% include "pagination.html" with page=post%}
     <h3><a href="{% url "blog:signup" %}">sign up</a>
         <br>
         <a href="{% url "blog:login" %}">login</a>
