@@ -77,4 +77,4 @@ class Post(models.Model):
             ])]
 
     def get_absolute_url(self):
-        return reverse("blog:detail", args=[self.id])
+        return reverse("blog:post detail", kwargs={"id":self.id, "username":self.author.username})
