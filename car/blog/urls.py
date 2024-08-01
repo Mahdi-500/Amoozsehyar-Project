@@ -8,5 +8,6 @@ urlpatterns = [
     path('CarBlog\login', views.loginview, name='login'),
     path('CarBlog\<str:username>\createPost', views.AddPostview, name='add post'),
     path('CarBlog\<str:username>\profile', views.PostListview, name='profile'),
-    path('CarBlog\<str:username>\post\<int:id>', views.PostDtailview, name='post detail')
+    path('CarBlog\<str:username>\post\<int:id>', views.PostDtailview, name='post detail'),
+    path("CarBlog\Ticket", views.Ticketview, name='ticket'),
 ]
