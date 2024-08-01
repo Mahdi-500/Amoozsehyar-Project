@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model, authenticate
 from django.core.paginator import Paginator
 from django.db import IntegrityError
-from .forms import SignUpForm, LoginForm, PostFrom
+from .forms import SignUpForm, LoginForm, PostFrom, TicketForm
 from .models import SignUp, Post
 
 # Create your views here.
@@ -102,3 +102,19 @@ def PostDtailview(request, username, id):
     user = SignUp.objects.get(username=username)
     post = Post.Publish.get(author=user, id=id)
     return render(request, 'detail.html', {'post':post})
+
+def Ticketview(request):
+
+    if request.method == "POST":
+        form = TicketForm(data=request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect("blog:main")
+        
+        else:
+            return render(request, "forms/ticket.html", {"form":form})
+    
+    else:
+        form = TicketForm()
+        return render(request, "forms/ticket.html", {"form":form})
