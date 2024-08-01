@@ -60,7 +60,7 @@ class Post(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     engine_type = models.CharField(choices=EngineChoices, default=EngineChoices.I, max_length=2)
-    status = models.CharField(choices=StatusChoices.choices, default=StatusChoices.DRAFT, max_length=2)
+    status = models.CharField(choices=StatusChoices, default=StatusChoices.DRAFT, max_length=2)
 
     # ? date info
     created = models.DateTimeField(auto_now_add=True)
@@ -78,3 +78,25 @@ class Post(models.Model):
 
     def get_absolute_url(self):
         return reverse("blog:post detail", kwargs={"id":self.id, "username":self.author.username})
+
+class Ticket(models.Model):
+
+    class TicketType(models.TextChoices):
+        SUGESSTION = "SG", ("Sugesstions")
+        REPORT = "RE", ("Report")
+        OTHER = "OT",("Other")
+
+    # ? user info
+    name = models.CharField(max_length=255)
+    email = models.EmailField(max_length=255)
+
+    # ? ticket details
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    type = models.CharField(max_length=2, choices=TicketType, default=TicketType.SUGESSTION)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = [
+            '-created'
+            ]
