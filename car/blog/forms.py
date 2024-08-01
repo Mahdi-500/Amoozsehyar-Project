@@ -1,4 +1,4 @@
-from .models import SignUp, Login, Post
+from .models import SignUp, Login, Post, Ticket
 from django import forms
 
 class SignUpForm(forms.ModelForm):
@@ -25,7 +25,27 @@ class LoginForm(forms.ModelForm):
         model = Login
         fields = ['username', 'password']
 
+
 class PostFrom(forms.ModelForm):
     class Meta:
         model = Post
         fields = ["title", "description", "engine_type"]
+
+
+class TicketForm(forms.ModelForm):
+    class Meta:
+        model = Ticket
+        fields = ["name", "email", "title", "message", "type"]
+
+    def clean(self):
+        name = self.cleaned_data['name']
+        email = self.cleaned_data['email']
+
+        if not str(name).isalpha():
+            raise forms.ValidationError("name must be letters only")
+        
+        if "@" not in str(email):
+            raise forms.ValidationError("invalid email")
+        
+        if str(email)[str(email).find("@") + 1:] != "gmail.com" and str(email)[str(email).find("@") + 1:] != "yahoo.com":
+            raise forms.ValidationError("must be a gmail or a yahoo mail")
