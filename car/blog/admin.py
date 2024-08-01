@@ -13,3 +13,8 @@ class PostAdmin(admin.ModelAdmin):
     list_editable = ['status']
     list_filter = ['status', 'created', 'author']
     raw_id_fields = ['author']
+
+@admin.register(Ticket)
+class TicketAdmin(admin.ModelAdmin):
+    list_display = ['name', 'title', 'type', 'created']
+    list_filter = ['type', 'created']
