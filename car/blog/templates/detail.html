@@ -12,4 +12,20 @@
     <br><br>
 
     {{post.created}}
+    <br><br>
+    <a href="{% url "blog:comment" username post.id %}">Add Comment</a>
+
+    <br><br><br><br><br>
+    {% if has_accepted_comment %}
+        {% for comments in comment %}
+            <h4>
+            {{comments.author}}
+        </h4>
+            {{comments.text}}
+
+        <br><br>
+        {% endfor %}
+    {% else %}
+        <h4>no comments yet</h4>
+    {% endif %}
 {% endblock content %}
