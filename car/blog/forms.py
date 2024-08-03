@@ -1,4 +1,4 @@
-from .models import SignUp, Login, Post, Ticket
+from .models import SignUp, Login, Post, Ticket, Comment
 from django import forms
 
 class SignUpForm(forms.ModelForm):
@@ -49,3 +49,9 @@ class TicketForm(forms.ModelForm):
         
         if str(email)[str(email).find("@") + 1:] != "gmail.com" and str(email)[str(email).find("@") + 1:] != "yahoo.com":
             raise forms.ValidationError("must be a gmail or a yahoo mail")
+        
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['text']
