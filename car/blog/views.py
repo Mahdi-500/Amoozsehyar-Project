@@ -1,20 +1,22 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import IntegrityError
-from .forms import SignUpForm, LoginForm, PostFrom, TicketForm
+from django.urls import NoReverseMatch
+from .forms import *
 from .models import SignUp, Post
 
 # Create your views here.
-def Mainview(request):
+def Mainview(request, username):
     posts = Post.Publish.all()
     page = Paginator(posts,2)
     page_number = request.GET.get("page", 1)
     posts = page.page(page_number)
     print(posts.next_page_number)
     
-    return render(request, "main.html", {"post":posts})
+    return render(request, "main.html", {"post":posts, "username":username})
 
 
 def signupView(request):
@@ -49,10 +51,9 @@ def loginview(request):
             if get_user_model().objects.filter(username=form.cleaned_data['username']).exists():
                 
                 if authenticate(username=form.cleaned_data["username"], password = form.cleaned_data["password"]) != None:
-                        message = "logged in successfully"
                         username = str(form.cleaned_data["username"])
                         
-                        return redirect("blog:profile", username=username)
+                        return redirect("blog:main", username=username)
                 
                 else:
                         username = str(form.cleaned_data["username"])
@@ -98,10 +99,20 @@ def PostListview(request, username):
     posts = Post.Publish.filter(author=user).all()
     return render(request, "profile.html", {'post':posts, 'username':username})
 
+
 def PostDtailview(request, username, id):
     user = SignUp.objects.get(username=username)
     post = Post.Publish.get(author=user, id=id)
-    return render(request, 'detail.html', {'post':post})
+    comment = Comment.accepted.filter(post=post).all()
+    has_comment = comment.exists()
+    context = {
+        "post":post,
+        "username":username,
+        "comment":comment,
+        "has_accepted_comment":has_comment,
+    }
+    return render(request, 'detail.html', context)
+
 
 def Ticketview(request):
 
@@ -118,3 +129,29 @@ def Ticketview(request):
     else:
         form = TicketForm()
         return render(request, "forms/ticket.html", {"form":form})
+
+
+def Commentview(request, id, username):
+        
+    if request.method == "POST":
+        form = CommentForm(data=request.POST)
+
+        if form.is_valid():
+            
+            comment = form.save(commit=False)
+            post = get_object_or_404(Post, id=id)
+            comment.post = post
+            comment.author = SignUp.objects.get(username=username)
+            comment.save()
+
+            context = {
+                "form":form,
+                "comment":comment,
+                "post":post,
+                "username":username,
+            }
+        return render(request, "detail.html", context)
+        
+    else:
+        form = CommentForm()
+        return render(request, 'forms/comment.html', {"form":form})
