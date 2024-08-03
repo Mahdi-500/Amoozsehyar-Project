@@ -79,6 +79,7 @@ class Post(models.Model):
     def get_absolute_url(self):
         return reverse("blog:post detail", kwargs={"id":self.id, "username":self.author.username})
 
+
 class Ticket(models.Model):
 
     class TicketType(models.TextChoices):
@@ -100,3 +101,35 @@ class Ticket(models.Model):
         ordering = [
             '-created'
             ]
+        
+
+class Comment(models.Model):
+        
+    class StatusChoices(models.TextChoices):
+        DARFT = "DR", ("Draft")
+        REJECTED = "RJ", ("Rejected")
+        ACCEPTED = "AC", ("Accepted")
+
+    class Accepted(models.Manager):
+            def get_queryset(self) -> models.QuerySet:
+                return super().get_queryset().filter(status=Comment.StatusChoices.ACCEPTED)
+    
+    # ? new manager
+    objects = models.Manager()  # default manager
+    accepted = Accepted()  # new manager
+
+    # ? post info
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post")
+
+    # ? user info
+    author = models.ForeignKey(SignUp, on_delete=models.CASCADE)
+
+    # ? comment info
+    text = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=2, choices=StatusChoices, default=StatusChoices.DARFT)
+
+    class Meta:
+        ordering = [
+            '-created'
+        ]
