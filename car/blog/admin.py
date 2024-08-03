@@ -18,3 +18,9 @@ class PostAdmin(admin.ModelAdmin):
 class TicketAdmin(admin.ModelAdmin):
     list_display = ['name', 'title', 'type', 'created']
     list_filter = ['type', 'created']
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ['author', 'created', 'status']
+    list_editable = ['status']
+    list_filter = ['created', 'status']
