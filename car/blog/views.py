@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import IntegrityError
-from django.urls import NoReverseMatch
+from django.db.models import Max
 from .forms import *
 from .models import SignUp, Post
 
@@ -14,9 +14,12 @@ def Mainview(request, username):
     page = Paginator(posts,2)
     page_number = request.GET.get("page", 1)
     posts = page.page(page_number)
-    print(posts.next_page_number)
-    
-    return render(request, "main.html", {"post":posts, "username":username})
+    context = {
+        "post":posts,
+        "username":username,
+    }
+
+    return render(request, "main.html", context)
 
 
 def signupView(request):
