@@ -3,6 +3,9 @@
 {% block title %}detail{% endblock title %}
 
 {% block content %}
+
+    <h2>Reading time: {{post.reading_time}} minutes</h2>
+
     <h2>description:</h2>
     <h3>{{post.description}}</h3>
     <br><br>
@@ -17,6 +20,7 @@
 
     <br><br><br><br><br>
     {% if has_accepted_comment %}
+        <h2>Comments</h2>
         {% for comments in comment %}
             <h4>
             {{comments.author}}
