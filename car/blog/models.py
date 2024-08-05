@@ -61,7 +61,8 @@ class Post(models.Model):
     description = models.TextField(blank=True)
     engine_type = models.CharField(choices=EngineChoices, default=EngineChoices.I, max_length=2)
     status = models.CharField(choices=StatusChoices, default=StatusChoices.DRAFT, max_length=2)
-
+    reading_time = models.IntegerField(default=0)
+    
     # ? date info
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
