@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load blog_tags %}
+
+{% block title %}Post List{% endblock title %}Post List
+
+{% block content %}
+    {%read_time as post%}
+    <h3>most reading time (top 5)</h3>
+    {% for post in post %}
+        <h4>
+            <a href="{{post.get_absolute_url}}">{{post.title}}</a> with {{post.reading_time}} minutes
+        </h4>
+
+        {% endfor %}
+{% endblock content %}
