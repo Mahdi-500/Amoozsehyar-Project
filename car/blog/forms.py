@@ -29,7 +29,7 @@ class LoginForm(forms.ModelForm):
 class PostFrom(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ["title", "description", "engine_type"]
+        fields = ["title", "description", "engine_type", "reading_time"]
 
 
 class TicketForm(forms.ModelForm):
