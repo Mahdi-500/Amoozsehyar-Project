@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load blog_tags %}
 
 {% block title %}detail{% endblock title %}
 
@@ -14,22 +15,28 @@
     <h3>{{post.engine_type}}</h3>
     <br><br>
 
-    {{post.created}}
+    <h4>created at {{post.created}}</h4>
     <br><br>
     <a href="{% url "blog:comment" username post.id %}">Add Comment</a>
 
     <br><br><br><br><br>
+    {%comment_count post as cmm%}
+
+    <h4>{{cmm}} comments</h4>
+
     {% if has_accepted_comment %}
         <h2>Comments</h2>
         {% for comments in comment %}
             <h4>
-            {{comments.author}}
-        </h4>
-            {{comments.text}}
+                {{comments.author.name}}
+            </h4>
+            {{comments.text|censore}}
 
         <br><br>
         {% endfor %}
+
     {% else %}
         <h4>no comments yet</h4>
     {% endif %}
+
 {% endblock content %}
