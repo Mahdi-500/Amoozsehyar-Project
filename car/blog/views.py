@@ -60,11 +60,11 @@ def loginview(request):
                 
                 else:
                         username = str(form.cleaned_data["username"])
-                        message = 'password is not correct'
+                        message = 'incorrect password'
                         return render(request, 'forms\login.html', {'message': message, 'form':form, "username":username})
             
             else:
-                message = 'no username found'
+                message = 'incorrect username'
                 username = str(form.cleaned_data["username"])
                 return render(request, "forms\login.html", {'message': message, "form": form, "usename":username})
         

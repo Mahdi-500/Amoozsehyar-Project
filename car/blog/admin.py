@@ -32,4 +32,4 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ['author', 'created', 'status']
     list_editable = ['status']
     list_filter = ['created', 'status']
-    actions = ["make_accept"]
+    actions = [make_accept]

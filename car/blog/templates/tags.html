@@ -12,4 +12,14 @@
         </h4>
 
         {% endfor %}
+    
+    <br><br>
+    {%most_popular as pop%}
+    <h3>Popular posts (top 5)</h3>
+    {% for post in pop %}
+        <h4>
+            <a href="{{post.get_absolute_url}}">{{post.title}}</a>
+        </h4>
+
+    {% endfor %}
 {% endblock content %}

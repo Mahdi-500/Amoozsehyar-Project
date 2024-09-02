@@ -120,7 +120,7 @@ class Comment(models.Model):
     accepted = Accepted()  # new manager
 
     # ? post info
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post")
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comment")
 
     # ? user info
     author = models.ForeignKey(SignUp, on_delete=models.CASCADE)
