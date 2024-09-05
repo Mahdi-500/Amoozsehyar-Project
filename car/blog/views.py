@@ -158,3 +158,21 @@ def Commentview(request, id, username):
     else:
         form = CommentForm()
         return render(request, 'forms/comment.html', {"form":form})
+    
+
+def SearchView(request):
+    query = None
+    result = []
+
+    if 'query' in request.GET:
+        form = SearchForm(data=request.GET)
+
+        if form.is_valid():
+            query = form.cleaned_data["query"]
+            result = Post.Publish.filter(title__contains=query)
+
+    context = {
+        "query": query,
+        "result": result
+    }
+    return render(request, "search_result.html", context)
