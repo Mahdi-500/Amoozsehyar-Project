@@ -3,6 +3,9 @@
 {% block title %}Main Page{% endblock title %}
 
 {% block content %}
+
+    {% include "forms\search.html" %}
+
     {{message}}
 
     {% include "post_list.html" with post=post %}
