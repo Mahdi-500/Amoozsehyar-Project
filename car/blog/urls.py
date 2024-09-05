@@ -11,4 +11,5 @@ urlpatterns = [
     path('CarBlog\<str:username>\post\<int:id>', views.PostDtailview, name='post detail'),
     path("CarBlog\Ticket", views.Ticketview, name='ticket'),
     path('CarBlog\<str:username>\global\post\<int:id>\comment', views.Commentview, name="comment"),
+    path("CarBlog\search", views.SearchView, name="search"),
 ]
