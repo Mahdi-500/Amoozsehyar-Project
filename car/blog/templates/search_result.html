@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}search result{% endblock title %}search result
+
+{% block content %}
+
+    <h2>
+        search result for {{query}} : {{result.count}} 
+        <br><br>
+        {% for r in result %}
+            <a href="{{r.get_absolute_url}}">{{r.title}}</a>
+            <br>
+            {% empty %}
+                no result
+        {% endfor %}
+    </h2>
+{% endblock content %}
