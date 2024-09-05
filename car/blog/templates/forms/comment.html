@@ -3,7 +3,6 @@
 {% block title %}Add Comment{% endblock title %}Add Comment
 
 {% block content %}
-
     <form method = "POST">
         {% csrf_token %}
         {{form.as_p}}
