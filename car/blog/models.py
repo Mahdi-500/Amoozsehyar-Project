@@ -8,7 +8,7 @@ class SignUp(models.Model):
 
     class GenderChoices(models.TextChoices):
         FEMALE = "FE", ("Female")
-        MALE = "MA", ("Male")
+        MALE = "M", ("Male")
         CORROSAN = 'CR', ("Corrosan")
     
     # ? user info
