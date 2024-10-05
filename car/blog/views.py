@@ -1,10 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model, authenticate
-from django.contrib.auth.decorators import login_required
+from django.contrib.postgres.search import TrigramSimilarity
 from django.core.paginator import Paginator
 from django.db import IntegrityError
-from django.db.models import Max
 from .forms import *
 from .models import SignUp, Post
 
@@ -169,7 +168,9 @@ def SearchView(request):
 
         if form.is_valid():
             query = form.cleaned_data["query"]
-            result = Post.Publish.filter(title__contains=query)
+            #result = Post.Publish.filter(title__contains=query)
+            #result = Post.Publish.annotate(search=sv("title")).filter(search=query)
+            result = Post.Publish.annotate(similarity=TrigramSimilarity("title", query)).filter(similarity__gt=0.1).order_by("-similarity")
 
     context = {
         "query": query,
