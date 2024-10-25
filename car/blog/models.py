@@ -79,6 +79,9 @@ class Post(models.Model):
 
     def get_absolute_url(self):
         return reverse("blog:post detail", kwargs={"id":self.id, "username":self.author.username})
+    
+    def __str__(self):
+        return self.title
 
 
 class Ticket(models.Model):
@@ -134,3 +137,22 @@ class Comment(models.Model):
         ordering = [
             '-created'
         ]
+
+class Image(models.Model):
+    
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
+    image_file = models.ImageField(upload_to="post_images/")
+    title = models.CharField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering=[
+            "-title"
+        ]
+        indexes=[
+            models.Index(fields=['title', 'date_created'])
+        ]
+
+    def __str__(self):
+        return self.title if self.title else "None"
