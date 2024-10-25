@@ -22,3 +22,4 @@ after running the server in the URL part add \CarBlog at the end
 
 the database is PostgreSQL now (it was the default one before)
 
+**Check the requirement file**
