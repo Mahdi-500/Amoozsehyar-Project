@@ -9,6 +9,7 @@
     {% if post %}
         {% for post in post %}
             <a href="{{post.get_absolute_url}}">{{post.title}}</a>
+            <img src="{{post.images.first.image_file.url}}" alt="{{post.images.first.title}}">
             <br><br>
         {% endfor %}
     {% else %}
