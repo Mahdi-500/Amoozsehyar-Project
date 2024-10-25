@@ -15,6 +15,7 @@
         {% for post in post %}
             <h3><a href="{{post.get_absolute_url}}">{{post.title}}</a></h3>
             <h4>author: {{post.author.name}}</h4>
+            <img src="{{post.images.first.image_file.url}}" alt="{{post.images.first.title}}">
             {% endfor %}
 
     {% else %}
