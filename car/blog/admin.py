@@ -33,3 +33,8 @@ class CommentAdmin(admin.ModelAdmin):
     list_editable = ['status']
     list_filter = ['created', 'status']
     actions = [make_accept]
+
+@admin.register(Image)
+class ImageAdmin(admin.ModelAdmin):
+    list_display = ["title", "date_created"]
+    list_filter = ['date_created']
