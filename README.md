@@ -18,7 +18,7 @@ after installing PostgreSQL do the steps below:
 # notes
 after running the server in the URL part add \CarBlog at the end
 
-**To use the search featur you have to have Postgresql installed**
+**To use the search feature you have to have Postgresql installed**
 
 the database is PostgreSQL now (it was the default one before)
 
