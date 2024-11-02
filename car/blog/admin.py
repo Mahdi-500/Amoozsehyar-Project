@@ -3,10 +3,21 @@ from .models import *
 
 # Register your models here.
 
+# ? Inlines
+class ImageInline(admin.TabularInline):
+    model = Image
+    extra = 0
+
+class CommentInline(admin.TabularInline):
+    model = Comment
+    extra = 0
+
+
 # ? admin actions
 @admin.action(description="mark all selected items as Accepted")
 def make_accept(modeladmin, request, queryset):
     queryset.update(status="AC")
+
 
 # ? admin classes
 @admin.register(SignUp)
@@ -21,6 +32,7 @@ class PostAdmin(admin.ModelAdmin):
     list_filter = ['status', 'created', 'author']
     raw_id_fields = ['author']
     actions = [make_accept]
+    inlines = [ImageInline, CommentInline]
 
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):
