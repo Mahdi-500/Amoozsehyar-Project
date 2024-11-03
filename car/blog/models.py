@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django_resized import ResizedImageField
 
 # Create your models here.
 
@@ -138,10 +139,11 @@ class Comment(models.Model):
             '-created'
         ]
 
+
 class Image(models.Model):
     
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
-    image_file = models.ImageField(upload_to="post_images/")
+    image_file = ResizedImageField(upload_to="post_images/", quality=80, force_format="PNG", size=[500, 500])
     title = models.CharField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
