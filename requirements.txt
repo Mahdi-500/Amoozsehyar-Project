@@ -1,6 +1,7 @@
 asgiref==3.8.1
 Django==5.0.7
 django-html==0.1.0
+django-resized==1.0.3
 Markdown==3.7
 pillow==11.0.0
 psycopg2-binary==2.9.9
