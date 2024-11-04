@@ -157,7 +157,7 @@ class Image(models.Model):
         indexes=[
             models.Index(fields=['title', 'date_created'])
         ]
-
+    
     def __str__(self):
         return self.title if self.title else "None"
     
