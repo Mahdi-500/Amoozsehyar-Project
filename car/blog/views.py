@@ -5,7 +5,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 from django.core.paginator import Paginator
 from django.db import IntegrityError
 from .forms import *
-from .models import SignUp, Post
+from .models import SignUp, Post, Image
 
 # Create your views here.
 def Mainview(request, username):
@@ -170,10 +170,12 @@ def SearchView(request):
             query = form.cleaned_data["query"]
             #result = Post.Publish.filter(title__contains=query)
             #result = Post.Publish.annotate(search=sv("title")).filter(search=query)
-            result = Post.Publish.annotate(similarity=TrigramSimilarity("title", query)).filter(similarity__gt=0.1).order_by("-similarity")
-
+            result_post = Post.Publish.annotate(similarity=TrigramSimilarity("title", query)).filter(similarity__gt=0.1).order_by("-similarity")
+            result_image = Image.objects.annotate(similarity=TrigramSimilarity("title", query)).filter(similarity__gt=0.1).order_by("-similarity")
+            
     context = {
         "query": query,
-        "result": result
+        "result_image": result_image,
+        "result_post": result_post
     }
     return render(request, "search_result.html", context)
