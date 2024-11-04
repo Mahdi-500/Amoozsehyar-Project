@@ -8,11 +8,18 @@
     <h2>
         search result for {{query}} : {{result.count}} 
         <br><br>
-        {% for r in result %}
+        {% for r in result_post %}
             <a href="{{r.get_absolute_url}}">{{r.title}}</a>
             <br>
             {% empty %}
-                no result
+                no result in posts
+        {% endfor %}
+
+        {% for i in result_image %}
+            <img src="{{i.image_file.url}}">
+            <br>
+            {% empty %}
+            no result in images
         {% endfor %}
     </h2>
 {% endblock content %}
