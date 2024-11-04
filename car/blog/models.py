@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django_resized import ResizedImageField
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 # Create your models here.
 
@@ -158,3 +160,8 @@ class Image(models.Model):
 
     def __str__(self):
         return self.title if self.title else "None"
+    
+@receiver(post_delete, sender=Image)
+def image_delete(sender, instance, **kwargs):
+    if instance.image_file:
+        instance.image_file.delete(False)
