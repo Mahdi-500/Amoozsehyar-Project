@@ -1,5 +1,5 @@
-# Django-Project
-in this repo, I put my practiced projects
+# Car Web blog
+I've created a web blog site about Cars
 
 # How to change the database to PostgreSQL
 after installing PostgreSQL do the steps below:
