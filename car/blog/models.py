@@ -4,6 +4,7 @@ from django.urls import reverse
 from django_resized import ResizedImageField
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+import datetime
 
 # Create your models here.
 
@@ -142,10 +143,20 @@ class Comment(models.Model):
         ]
 
 
+# todo changes the saving path
+def post_images_path(instance, filename):
+    return 'post_images/{0}/{1}/{2}/{3}'.format(instance.post.author.username, datetime.datetime.now().year,
+                                                datetime.datetime.now().month, filename)
+
+
 class Image(models.Model):
     
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
-    image_file = ResizedImageField(upload_to="post_images/", quality=80, force_format="PNG", size=[500, 500])
+
+    # ? saving image file
+    image_file = ResizedImageField(upload_to=post_images_path, quality=80, force_format="PNG", size=[500, 500])
+
+    # ? image info
     title = models.CharField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
@@ -155,11 +166,11 @@ class Image(models.Model):
             "-title"
         ]
         indexes=[
-            models.Index(fields=['title', 'date_created'])
+            models.Index(fields=['date_created'])
         ]
     
     def __str__(self):
-        return self.title if self.title else "None"
+        return self.title if self.title else self.post.title
     
 @receiver(post_delete, sender=Image)
 def image_delete(sender, instance, **kwargs):
