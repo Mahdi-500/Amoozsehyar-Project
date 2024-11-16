@@ -11,12 +11,28 @@
         <a href="{% url "blog:profile" username%}">profile</a>
         <br><br>
     </h2>
+
+    {% comment %} ? showing all of the posts {% endcomment %}
+
     {% if post %}
         {% for post in post %}
             <h3><a href="{{post.get_absolute_url}}">{{post.title}}</a></h3>
             <h4>author: {{post.author.name}}</h4>
-            <img src="{{post.images.first.image_file.url}}" alt="{{post.images.first.title}}">
-            {% endfor %}
+
+            {% comment %} ? post images {% endcomment %}
+            
+            {% if post.images %}
+            
+                {% if post.images.first.title %}
+                
+                    <img src="{{post.images.first.image_file.url}}" alt="{{post.images.first.title}}">
+                {% elif post.images.first.image_file.url %}
+            
+                    <img src="{{post.images.first.image_file.url}}" alt="{{post.title}}">
+                {% endif %}
+            {% endif %}
+
+        {% endfor %}
 
     {% else %}
         <h3>no posts yet</h3>
