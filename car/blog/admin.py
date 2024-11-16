@@ -27,7 +27,7 @@ class SignUpAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ['title', 'author', 'status', 'created', 'reading_time']
+    list_display = ["id", 'title', 'author', 'status', 'created', 'reading_time']
     list_editable = ['status', "reading_time"]
     list_filter = ['status', 'created', 'author']
     raw_id_fields = ['author']
@@ -48,5 +48,5 @@ class CommentAdmin(admin.ModelAdmin):
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ["title", "date_created"]
+    list_display = ["id","__str__", "date_created"]
     list_filter = ['date_created']
