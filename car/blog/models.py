@@ -170,7 +170,8 @@ class Image(models.Model):
         ]
     
     def __str__(self):
-        return self.title if self.title else self.post.title
+        print(Post.Publish.get(id=self.post.id).title)
+        return self.title if self.title else Post.Publish.get(id=self.post.id).title
     
 @receiver(post_delete, sender=Image)
 def image_delete(sender, instance, **kwargs):
