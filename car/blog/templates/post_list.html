@@ -7,8 +7,23 @@
     <h1>Posts</h1>
     <br><br>
     {% if post %}
-        {% for post in post %}
-            <a href="{{post.get_absolute_url}}">{{post.title}}</a>
+        <table border="1" cellpadding="10" cellspacing="0" width="50%">
+            <tr style="background-color: black; color: white;">
+                <th>number</th>
+                <th>view post</th>
+                <th>edit</th>
+                <th>delete</th>
+            </tr>
+            {% for post in post %}
+            <tr>
+                <td>{{forloop.counter}}</td>
+                <td><a href="{{post.get_absolute_url}}">view</a></td>
+                <td><a href="">edit</a></td>
+                <td><a href="">delete</a></td>
+            </tr>
+        </table> 
+
+            {% comment %} <a href="{{post.get_absolute_url}}">{{post.title}}</a>
             <br><br>
 
             {% if post.images %}
@@ -23,7 +38,7 @@
 
             {% else %}
                 no images
-            {% endif %}
+            {% endif %} {% endcomment %}
 
             <br><br>
         {% endfor %}
