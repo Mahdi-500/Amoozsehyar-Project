@@ -76,7 +76,7 @@ def AddPostview(request, username):
 
     if request.method == "POST":
         message = None
-        form = PostFrom(data=request.POST)
+        form = PostFrom(request.POST, request.FILES)
 
         if form.is_valid():
 
@@ -85,12 +85,15 @@ def AddPostview(request, username):
                 post = form.save(commit=False)
                 post.author = SignUp.objects.get(username=username)
                 post.save()
+                Image.objects.create(image_file=form.cleaned_data["img1"], post=post)
+                Image.objects.create(image_file=form.cleaned_data["img2"], post=post)
+                Image.objects.create(image_file=form.cleaned_data["img3"], post=post)
 
             except User.DoesNotExist:
                 message = "incorrect username"
                 return render(request, "add_post.html", {'message':message, "form":form})
 
-        return render(request, "profile.html", {"username":username})
+        return redirect("blog:profile", username=username)
     else:
         form = PostFrom()
         return render(request, "forms/add_post.html", {"form": form})
