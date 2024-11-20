@@ -15,12 +15,13 @@
                 <th>delete</th>
             </tr>
             {% for post in post %}
-            <tr>
-                <td>{{forloop.counter}}</td>
-                <td><a href="{{post.get_absolute_url}}">view</a></td>
-                <td><a href="">edit</a></td>
-                <td><a href="">delete</a></td>
-            </tr>
+                <tr>
+                    <td>{{forloop.counter}}</td>
+                    <td><a href="{{post.get_absolute_url}}">{{post.title}}</a></td>
+                    <td><a href="">edit</a></td>
+                    <td><a href="">delete</a></td>
+                </tr>
+            {% endfor %}
         </table> 
 
             {% comment %} <a href="{{post.get_absolute_url}}">{{post.title}}</a>
@@ -38,10 +39,9 @@
 
             {% else %}
                 no images
-            {% endif %} {% endcomment %}
+            {% endif %}
 
-            <br><br>
-        {% endfor %}
+            <br><br> {% endcomment %}
 
     {% else %}
         <h3>no posts yet</h3>
