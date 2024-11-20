@@ -4,6 +4,7 @@ from django.urls import reverse
 from django_resized import ResizedImageField
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.template.defaultfilters import slugify
 import datetime
 
 # Create your models here.
@@ -65,6 +66,7 @@ class Post(models.Model):
     description = models.TextField(blank=True)
     engine_type = models.CharField(choices=EngineChoices, default=EngineChoices.I, max_length=2)
     status = models.CharField(choices=StatusChoices, default=StatusChoices.DRAFT, max_length=2)
+    slug = models.SlugField(max_length=100, null=True)
     reading_time = models.IntegerField(default=0)
     
     # ? date info
@@ -80,6 +82,11 @@ class Post(models.Model):
         indexes = [models.Index(fields=[
             'author'
             ])]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse("blog:post detail", kwargs={"id":self.id, "username":self.author.username})
