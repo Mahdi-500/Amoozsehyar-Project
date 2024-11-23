@@ -182,3 +182,12 @@ def SearchView(request):
         "result_post": result_post
     }
     return render(request, "search_result.html", context)
+
+def DeletePostView(request, id):
+    post = get_object_or_404(Post, id=id)
+    username = post.author.username
+    if request.method == "POST":
+        post.delete()
+        return redirect("blog:profile", username=username)
+    
+    return render(request, "delete-post.html", {'post':post, 'username':username})
