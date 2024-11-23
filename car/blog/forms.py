@@ -27,9 +27,9 @@ class LoginForm(forms.ModelForm):
 
 
 class PostFrom(forms.ModelForm):
-    img1 = forms.ImageField(label="image1")
-    img2 = forms.ImageField(label="image2")
-    img3 = forms.ImageField(label="image3")
+    img1 = forms.ImageField(label="image1", required=False)
+    img2 = forms.ImageField(label="image2", required=False)
+    img3 = forms.ImageField(label="image3", required=False)
     class Meta:
         model = Post
         fields = ["title", "description", "engine_type", "reading_time"]
