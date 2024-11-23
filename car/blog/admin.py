@@ -31,6 +31,7 @@ class PostAdmin(admin.ModelAdmin):
     list_editable = ['status', "reading_time"]
     list_filter = ['status', 'created', 'author']
     raw_id_fields = ['author']
+    prepopulated_fields = {"slug": ["title"]}
     actions = [make_accept]
     inlines = [ImageInline, CommentInline]
 
