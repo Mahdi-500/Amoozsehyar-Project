@@ -76,7 +76,7 @@ def AddPostview(request, username):
 
     if request.method == "POST":
         message = None
-        form = PostFrom(request.POST, request.FILES)
+        form = PostForm(request.POST, request.FILES)
 
         if form.is_valid():
 
@@ -95,7 +95,7 @@ def AddPostview(request, username):
 
         return redirect("blog:profile", username=username)
     else:
-        form = PostFrom()
+        form = PostForm()
         return render(request, "forms/add_post.html", {"form": form})
 
 
@@ -191,3 +191,32 @@ def DeletePostView(request, id):
         return redirect("blog:profile", username=username)
     
     return render(request, "delete-post.html", {'post':post, 'username':username})
+
+def EditPostView(request, id):
+    post = get_object_or_404(Post, id=id)
+    username = post.author.username
+
+    if request.method == "POST":
+        form = PostForm(request.POST, request.FILES, instance=post)
+
+        if form.is_valid():
+
+            try:
+                User.objects.get(username=username)
+                post = form.save(commit=False)
+                post.author = SignUp.objects.get(username=username)
+                post.save()
+
+                
+                Image.objects.create(image_file=form.cleaned_data["img1"], post=post)
+                Image.objects.create(image_file=form.cleaned_data["img2"], post=post)
+                Image.objects.create(image_file=form.cleaned_data["img3"], post=post)
+
+            except User.DoesNotExist:
+                message = "incorrect username"
+                return render(request, "edit-post.html", {'message':message, "form":form})
+
+        return redirect("blog:profile", username=username)
+    else:
+        form = PostForm(instance=post)
+        return render(request, "edit-post.html", {"form": form, "post":post})
