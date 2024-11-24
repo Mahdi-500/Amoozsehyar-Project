@@ -26,7 +26,7 @@ class LoginForm(forms.ModelForm):
         fields = ['username', 'password']
 
 
-class PostFrom(forms.ModelForm):
+class PostForm(forms.ModelForm):
     img1 = forms.ImageField(label="image1", required=False)
     img2 = forms.ImageField(label="image2", required=False)
     img3 = forms.ImageField(label="image3", required=False)
