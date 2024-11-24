@@ -18,7 +18,7 @@
                 <tr>
                     <td>{{forloop.counter}}</td>
                     <td><a href="{{post.get_absolute_url}}">{{post.title}}</a></td>
-                    <td><a href="">edit</a></td>
+                    <td><a href="{% url "blog:edit post" post.id %}">edit</a></td>
                     <td><a href="{% url "blog:delete post" post.id %}">delete</a></td>
                 </tr>
             {% endfor %}
