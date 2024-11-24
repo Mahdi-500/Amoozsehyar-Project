@@ -152,8 +152,8 @@ class Comment(models.Model):
 
 # todo changes the saving path
 def post_images_path(instance, filename):
-    return 'post_images/{0}/{1}/{2}/{3}'.format(instance.post.author.username, datetime.datetime.now().year,
-                                                datetime.datetime.now().month, filename)
+    return 'post_images/{0}/{1}/{2}/{3}/{4}/{5}'.format(instance.post.author.username, datetime.datetime.now().year,
+                                                datetime.datetime.now().month, instance.post.title, instance.post.id, filename)
 
 
 class Image(models.Model):
