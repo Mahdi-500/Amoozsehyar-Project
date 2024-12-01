@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import get_user_model, authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.paginator import Paginator
 from django.db import IntegrityError
@@ -8,14 +9,14 @@ from .forms import *
 from .models import SignUp, Post, Image
 
 # Create your views here.
-def Mainview(request, username):
+def Mainview(request,):
     posts = Post.Publish.all()
     page = Paginator(posts,2)
     page_number = request.GET.get("page", 1)
     posts = page.page(page_number)
+
     context = {
         "post":posts,
-        "username":username,
     }
 
     return render(request, "main.html", context)
@@ -52,10 +53,22 @@ def loginview(request):
         if form.is_valid():
             if get_user_model().objects.filter(username=form.cleaned_data['username']).exists():
                 
-                if authenticate(username=form.cleaned_data["username"], password = form.cleaned_data["password"]) != None:
-                        username = str(form.cleaned_data["username"])
+                user = authenticate(request, username=form.cleaned_data["username"], password = form.cleaned_data["password"])
+                if user is not None:
                         
-                        return redirect("blog:main", username=username)
+                        # ? saving user info
+                        username = str(form.cleaned_data["username"])
+                        request.session["username"] = username
+
+                        # ? post pagination
+                        posts = Post.Publish.all()
+                        page = Paginator(posts,2)
+                        page_number = request.GET.get("page", 1)
+                        posts = page.page(page_number)
+
+                        login(request, user)
+
+                        return render(request, "main.html", {'username':username, 'post':posts})
                 
                 else:
                         username = str(form.cleaned_data["username"])
@@ -72,7 +85,14 @@ def loginview(request):
         return render(request, "forms\login.html", {'form': form})
 
 
-def AddPostview(request, username):
+def LogoutView(request):
+    logout(request)
+    return redirect("blog:main")
+
+
+@login_required
+def AddPostview(request):
+    username = request.session.get('username')
 
     if request.method == "POST":
         message = None
@@ -99,20 +119,22 @@ def AddPostview(request, username):
         return render(request, "forms/add_post.html", {"form": form})
 
 
-def PostListview(request, username):
-    user = SignUp.objects.get(username=username)
+@login_required
+def PostListview(request):
+    #username = request.session.get('username')
+    user = SignUp.objects.get(username=request.user)
     posts = Post.Publish.filter(author=user).all()
-    return render(request, "profile.html", {'post':posts, 'username':username})
+    return render(request, "profile.html", {'post':posts})
 
 
-def PostDtailview(request, username, id):
-    user = SignUp.objects.get(username=username)
-    post = Post.Publish.get(author=user, id=id)
+def PostDtailview(request, id):
+    #username = request.session.get('username')
+    post = Post.Publish.get(id=id)
     comment = Comment.accepted.filter(post=post).all()
     has_comment = comment.exists()
     context = {
         "post":post,
-        "username":username,
+        "username":request.user,
         "comment":comment,
         "has_accepted_comment":has_comment,
     }
@@ -136,8 +158,10 @@ def Ticketview(request):
         return render(request, "forms/ticket.html", {"form":form})
 
 
-def Commentview(request, id, username):
-        
+@login_required
+def Commentview(request, id):
+    username = request.session.get('username')
+
     if request.method == "POST":
         form = CommentForm(data=request.POST)
 
@@ -183,6 +207,8 @@ def SearchView(request):
     }
     return render(request, "search_result.html", context)
 
+
+@login_required
 def DeletePostView(request, id):
     post = get_object_or_404(Post, id=id)
     username = post.author.username
@@ -192,6 +218,8 @@ def DeletePostView(request, id):
     
     return render(request, "delete-post.html", {'post':post, 'username':username})
 
+
+@login_required
 def EditPostView(request, id):
     post = get_object_or_404(Post, id=id)
     username = post.author.username

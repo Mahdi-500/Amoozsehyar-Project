@@ -1,18 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Main Page{% endblock title %}
+{% block title %}Profile{% endblock title %}
 
 {% block content %}
 
     {% include "forms\search.html" %}
 
     {{message}}
-
+    
+    <a href="{% url "blog:logout" %}">logout</a>
     {% include "post_list.html" with post=post %}
     <br><br>
 
     <h3>
-        <a href="{% url "blog:add post" username%}">add post</a>
+        <a href="{% url "blog:add post" %}">add post</a>
     </h3>
 
 {% endblock content %}

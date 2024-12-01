@@ -19,7 +19,7 @@
 
     <h4>created at {{post.created}}</h4>
     <br><br>
-    <a href="{% url "blog:comment" username post.id %}">Add Comment</a>
+    <a href="{% url "blog:comment" post.id %}">Add Comment</a>
     <br>
     
     {% for img in post.images.all %}

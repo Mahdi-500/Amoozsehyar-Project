@@ -1,15 +1,20 @@
 {% extends "base.html" %}
 {% load blog_tags %}
 
-{% block title %}Main page{% endblock title %}
+{% block title %}Main Page{% endblock title %}
 
 {% block content %}
 
     {% include "forms\search.html" %}
 
     <h2>
-        <a href="{% url "blog:profile" username%}">profile</a>
-        <br><br>
+        {% if user.is_authenticated %}
+            <a href="{% url "blog:profile" %}">Profile</a>
+            <br><br>
+        {% else %}
+            <a href="{% url "blog:signup" %}">profile</a>
+            <br><br>
+        {% endif %}
     </h2>
 
     {% comment %} ? showing all of the posts {% endcomment %}
