@@ -2,9 +2,18 @@ from .models import SignUp, Login, Post, Ticket, Comment
 from django import forms
 
 class SignUpForm(forms.ModelForm):
+    
+
+    first_name = forms.CharField(required=False)
+    last_name = forms.CharField(required=False)
+    username = forms.CharField(min_length=5)
+    email = forms.EmailField(widget=forms.EmailInput(), required=False)
+    password = forms.CharField(widget=forms.PasswordInput())
+
     class Meta:
         model = SignUp
-        fields = ['name', 'username', 'password', 'gender']
+        fields = ['first_name','last_name', 'username', 'email', 'password', 'gender']
+        field_order = ['first_name','last_name', 'username', 'email', 'password', 'gender']
 
     def clean(self):
         name = self.cleaned_data['name']
@@ -58,6 +67,7 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ['text']
+
 
 class SearchForm(forms.Form):
     query = forms.CharField()

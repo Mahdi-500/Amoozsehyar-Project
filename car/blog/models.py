@@ -17,17 +17,16 @@ class SignUp(models.Model):
         CORROSAN = 'CR', ("Corrosan")
     
     # ? user info
-    user = models.OneToOneField(User, on_delete=models.CASCADE, default=None, unique=True)
-    name = models.CharField(max_length=255)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="user")
     gender = models.CharField(choices=GenderChoices.choices, default=GenderChoices.MALE, max_length=2)
-    username = models.CharField(max_length=255)
-    password = models.CharField(max_length=255)
 
     # ? date info
     joined = models.DateTimeField(auto_now_add=True)
 
+    
     def __str__(self) -> str:
-        return self.username
+        return self.user.username
+
 
 
 class Login(models.Model):

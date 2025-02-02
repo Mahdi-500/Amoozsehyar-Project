@@ -22,11 +22,11 @@
     {% if post %}
         {% for post in post %}
             <h3><a href="{{post.get_absolute_url}}">{{post.title}}</a></h3>
-            <h4>author: {{post.author.name}}</h4>
+            <h4>author: {{post.author.user.first_name}}</h4>
 
             {% comment %} ? post images {% endcomment %}
             
-            {% if post.images %}
+            {% if post.images.image_file %}
             
                 {% if post.images.first.title %}
                 

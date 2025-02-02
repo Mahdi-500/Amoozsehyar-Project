@@ -25,13 +25,17 @@ def Mainview(request,):
 def signupView(request):
     
     if request.method == "POST":
+        print(request.method, 111111111111111111)
         signup = None
         message = ''
         form = SignUpForm(data = request.POST)
         
         if form.is_valid():
             try:
-                new_user = User.objects.create_user(username=form.cleaned_data["username"],password= form.cleaned_data['password'])
+                new_user = User.objects.create_user(username=form.cleaned_data["username"],
+                                                    password= form.cleaned_data['password'],
+                                                    first_name= form.cleaned_data['first_name'],
+                                                    last_name= form.cleaned_data['last_name'])
                 signup = form.save(commit=False)
                 signup.user = new_user
                 signup.save()
@@ -47,42 +51,33 @@ def signupView(request):
 
 def loginview(request):
 
-    if request.method == "POST":
-        form = LoginForm(data = request.POST)
+    if request.method == "POST": 
+        form = LoginForm(data=request.POST)
 
-        if form.is_valid():
-            if get_user_model().objects.filter(username=form.cleaned_data['username']).exists():
-                
-                user = authenticate(request, username=form.cleaned_data["username"], password = form.cleaned_data["password"])
-                if user is not None:
-                        
-                        # ? saving user info
-                        username = str(form.cleaned_data["username"])
-                        request.session["username"] = username
+        if form.is_valid(): 
+            username = form.cleaned_data['username'] 
+            password = form.cleaned_data['password'] 
+            user = authenticate(request, username=username, password=password)
 
-                        # ? post pagination
-                        posts = Post.Publish.all()
-                        page = Paginator(posts,2)
-                        page_number = request.GET.get("page", 1)
-                        posts = page.page(page_number)
+            if user is not None:
 
-                        login(request, user)
+                # ? login
+                login(request, user)
 
-                        return render(request, "main.html", {'username':username, 'post':posts})
-                
-                else:
-                        username = str(form.cleaned_data["username"])
-                        message = 'incorrect password'
-                        return render(request, 'forms\login.html', {'message': message, 'form':form, "username":username})
+                # ? post
+                posts = Post.Publish.all() 
+                page = Paginator(posts, 2) 
+                page_number = request.GET.get("page", 1) 
+                posts = page.page(page_number)
+
+                return render(request, "main.html", {'username': username, 'post': posts})
             
-            else:
-                message = 'incorrect username'
-                username = str(form.cleaned_data["username"])
-                return render(request, "forms\login.html", {'message': message, "form": form, "usename":username})
-        
-    else:
-        form = LoginForm()
-        return render(request, "forms\login.html", {'form': form})
+            else: 
+                message = 'Incorrect username or password' 
+                return render(request, 'forms/login.html', {'message': message, 'form': form}) 
+    else: 
+        form = LoginForm() 
+        return render(request, "forms/login.html", {'form': form})
 
 
 def LogoutView(request):
@@ -92,7 +87,7 @@ def LogoutView(request):
 
 @login_required
 def AddPostview(request):
-    username = request.session.get('username')
+    username = request.user
 
     if request.method == "POST":
         message = None
@@ -101,19 +96,19 @@ def AddPostview(request):
         if form.is_valid():
 
             try:
-                User.objects.get(username=username)
+                user = SignUp.objects.get(user=request.user)
                 post = form.save(commit=False)
-                post.author = SignUp.objects.get(username=username)
+                post.author = user
                 post.save()
                 Image.objects.create(image_file=form.cleaned_data["img1"], post=post)
                 Image.objects.create(image_file=form.cleaned_data["img2"], post=post)
                 Image.objects.create(image_file=form.cleaned_data["img3"], post=post)
 
-            except User.DoesNotExist:
+            except SignUp.DoesNotExist:
                 message = "incorrect username"
-                return render(request, "add_post.html", {'message':message, "form":form})
+                return render(request, "forms/add_post.html", {'message':message, "form":form})
 
-        return redirect("blog:profile", username=username)
+        return redirect("blog:profile")
     else:
         form = PostForm()
         return render(request, "forms/add_post.html", {"form": form})
@@ -121,10 +116,15 @@ def AddPostview(request):
 
 @login_required
 def PostListview(request):
-    #username = request.session.get('username')
-    user = SignUp.objects.get(username=request.user)
-    posts = Post.Publish.filter(author=user).all()
-    return render(request, "profile.html", {'post':posts})
+    try:
+        user = SignUp.objects.get(user=request.user)
+    except SignUp.DoesNotExist:
+        #form = SignUpForm()
+        return redirect('blog:signup')
+        #return render(request, 'forms/signup.html', {'form':form})
+    else:
+        posts = Post.Publish.filter(author=user).all()
+        return render(request, "profile.html", {'post':posts})
 
 
 def PostDtailview(request, id):

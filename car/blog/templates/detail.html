@@ -22,9 +22,11 @@
     <a href="{% url "blog:comment" post.id %}">Add Comment</a>
     <br>
     
-    {% for img in post.images.all %}
-        <img src="{{img.image_file.url}}">
-    {% endfor %}
+    {% if post.images.image_file %}
+        {% for img in post.images.all %}
+            <img src="{{img.image_file.url}}">
+        {% endfor %}
+    {% endif %}
 
     <br><br><br><br><br>
     {%comment_count post as cmm%}

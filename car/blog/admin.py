@@ -22,7 +22,7 @@ def make_accept(modeladmin, request, queryset):
 # ? admin classes
 @admin.register(SignUp)
 class SignUpAdmin(admin.ModelAdmin):
-    list_display = ['name', 'username', 'gender', 'joined']
+    list_display = ['user','gender', 'joined']
     list_filter = ['gender', 'joined']
 
 @admin.register(Post)
