@@ -15,3 +15,8 @@ class MajorAdmin(admin.ModelAdmin):
 @admin.register(university)
 class UniversityAdmin(admin.ModelAdmin):
     list_display = ["name", "code"]
+
+@admin.register(professor)
+class ProfessorAdmin(admin.ModelAdmin):
+    list_display = ["first_name", "last_name"]
+    raw_id_fields = ["universities"]
