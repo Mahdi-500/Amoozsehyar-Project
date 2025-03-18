@@ -1,4 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.contrib import messages
 from django.contrib.auth.models import User
 from .models import *
 from .forms import *
@@ -6,6 +8,7 @@ from .forms import *
 # Create your views here.
 def MainView(request):
     return render(request, "main.html")
+
 
 def StudentFormView(request):
     if request.method == "POST":
@@ -26,7 +29,9 @@ def StudentFormView(request):
             new_student.user = new_user
             new_student.save()
 
-            return render(request, "main.html", {"message":"ثبت نام موفقیت آمیز بود"})
+            messages.success(request, "ثبت نام موفقیت آمیز بود")
+            return redirect('website:main') 
+
     else:
         form = StudentForm()
 
@@ -55,8 +60,78 @@ def ProfessorFormView(request):
             new_professor.save()
             new_professor.universities.set(form.cleaned_data["universities"])
             
-            return render(request, "main.html", {"message":"ثبت نام موفقیت آمیز بود"})
+            messages.success(request, "ثبت نام موفقیت آمیز بود")
+            return redirect('website:main')
     else:
         form = ProfessorForm()
 
     return render(request, "register_professor.html", {"form":form})
+
+
+def LessonFormView(request):
+    if request.method == "POST":
+        form = LessonForm(request.POST)
+
+        if form.is_valid():
+            new_lesson = form.save(commit=False)
+            set_lesson_code(lesson, new_lesson)
+
+            new_lesson.save()
+            new_lesson.pishniaz.set(form.cleaned_data["pishniaz"])
+            new_lesson.hamniaz.set(form.cleaned_data["hamniaz"])
+
+            messages.success(request, "ثبت درس موفقیت آمیز بود")
+            return redirect('website:main')
+        
+    else:
+        form = LessonForm()
+    
+    return render(request, "register_professor.html", {'form':form})
+
+
+
+def LessonClassFromView(request):
+    if request.method == "POST":
+        form = LessonClassFrom(request.POST)
+        #flag = False
+
+        if form.is_valid():
+
+            day = form.cleaned_data["lesson_day"]
+            time = form.cleaned_data["lesson_time"]
+            class_number = form.cleaned_data["class_number"]
+            semester = form.cleaned_data["semester"]
+
+            # ? checking class overlap
+            classes = lesson_class.objects.all().filter(semester=semester,
+                                                        lesson_day=day,
+                                                        lesson_time=time,
+                                                        class_number=class_number,
+                                                        )
+            if classes:
+                form = LessonClassFrom(request.POST)
+                messages.error(request, f"زمان و روز برگزاری این کلاس با  {classes[0]}  تداخل دارد")
+                return render(request, "add_lesson_class.html", {'form':form})
+        
+            # ? alternative way for checking class overlap
+            #classes = lesson_class.objects.all()
+            # for i in classes:
+            #     if i.semester == semester:
+            #         if i.lesson_day == day:
+            #             if i.lesson_time == time:
+            #                 if i.class_number == class_number:
+            #                     flag = True
+            
+            # if not flag:
+            #     form.save()
+            #     messages.success(request, "کلاس با موفقیت ایجاد شد")
+            #     return redirect("website:main")
+            # else:
+            #     form = LessonClassFrom(request.POST)
+            #     messages.error(request, "زمان و روز برگزاری این کلاس با یک کلاس دیگر تداخل دارد")
+            #     messages.info(request, i)
+            #     return render(request, "add_lesson_class.html", {'form':form})
+            
+    else:
+        form = LessonClassFrom()
+    return render(request, "add_lesson_class.html", {'form':form})

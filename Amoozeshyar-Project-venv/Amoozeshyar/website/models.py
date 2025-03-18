@@ -1,11 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django_resized import ResizedImageField
-from phonenumber_field.modelfields import PhoneNumberField
-from django_jalali.db import models as jmodels
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
-import os, shutil
+from django_resized import ResizedImageField
+from django_jalali.db import models as jmodels
+from phonenumber_field.modelfields import PhoneNumberField
+import os, shutil, random
 
 # Create your models here.
 class major(models.Model):
@@ -25,6 +25,7 @@ class major(models.Model):
 class university(models.Model):
     name = models.CharField(max_length=100, verbose_name="نام دانشگاه", blank=False)
     code = models.PositiveIntegerField(verbose_name="کد دانشگاه", unique=True, primary_key=True)
+    address = models.TextField(blank=False, verbose_name="آدرس", default="تهران")
 
     class Meta:
         indexes = [models.Index(
@@ -33,6 +34,55 @@ class university(models.Model):
 
     def __str__(self):
         return self.name
+
+
+
+class group(models.Model):
+    name = models.CharField(max_length=100, blank=False, verbose_name="نام گروه")
+    code = models.SmallIntegerField(blank=False, verbose_name="کد گروه", default=0)
+
+    def __str__(self):
+        return f'{self.name}({self.code})'
+
+
+class lesson(models.Model):
+
+    class unit_type_choices(models.TextChoices):
+        NAZARI = "نظری", ("نظری")
+        NAZARI_AMALI = "نظری-عملی", ("نظری - عملی")
+        AMALI = "عملی", ("عملی")
+        AZMAYESHGAHI = "آز", ("آزمایشگاهی")
+        CARAMOOZI = "کارآموزی", ("کارآموزی")
+
+
+    class lesson_type_choices(models.TextChoices):
+        ASLI = "اصلی", ("اصلی")
+        PAYE = "پایه", ("پایه")
+        OMOMI = "عمومی", ("عمومی")
+        TAKHASOSI = "تخصصی", ("تخصصی")
+        EKHTIARI = "اختیاری", ("اختیاری")
+
+    
+    name = models.CharField(max_length=255, blank=False, verbose_name="نام درس")
+    code = models.CharField(max_length=10, primary_key=True, blank=False, verbose_name="کد درس", default=None)     # ? autocomplete - primary key
+    unit = models.SmallIntegerField(verbose_name="تعداد واحد")
+    unit_type = models.CharField(max_length=11, choices=unit_type_choices, default=unit_type_choices.NAZARI, verbose_name="نوع واحد")
+    lesson_type = models.CharField(max_length=9, choices=lesson_type_choices, default=lesson_type_choices.ASLI, verbose_name="نوع درس")
+    pishniaz = models.ManyToManyField('self', blank=True, verbose_name="پیش نیاز")
+    hamniaz = models.ManyToManyField('self', blank=True, verbose_name="هم نیاز")
+    lesson_major = models.ManyToManyField(major, blank=False, verbose_name="رشته")
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["code"]
+            )
+        ]
+
+    
+    def __str__(self):
+        return self.name + f'({self.code})'
+    
 
 
 class professor(models.Model):
@@ -98,7 +148,7 @@ class student(models.Model):
     modified = jmodels.jDateTimeField(auto_now=True, verbose_name="تاریخ تغییر")
 
     # ? student's educational information
-    student_number = models.CharField(max_length=12, primary_key=True, default=None, verbose_name="شماره دانشجویی")  # ? autofill - primary key
+    student_number = models.CharField(max_length=12, primary_key=True, default=None, verbose_name="شماره دانشجویی")     # ? autofill - primary key
     entrance_year = jmodels.jDateField(auto_now_add=True, verbose_name="سال ورودی")
     last_year = models.SmallIntegerField(verbose_name="آخرین سال تحصیل", null=True, blank=True)     # ? autofill - entrance year + 5
     major = models.ForeignKey(major,on_delete=models.DO_NOTHING, related_name="student", default=None, verbose_name="رشته", blank=False)  
@@ -119,7 +169,38 @@ class student(models.Model):
 
 
 
-# todo - functions for models
+class lesson_class(models.Model):
+
+    class lesson_day_choices(models.TextChoices):
+        SATURDAY = "شنبه", "شنبه"
+        SUNDAY = "یکشنبه", "یکشنبه"
+        MONDAY = "دوشنبه", "دوشنبه"
+        TUESDAY = "سه شنبه", "سه شنبه"
+        WEDNESDAY = "چهارشنبه", "چهارشنبه"
+        THURSDAY = "پنج شنبه", "پنج شنبه"
+
+    # ? connected models    
+    lesson_code = models.ForeignKey(lesson, on_delete=models.DO_NOTHING, verbose_name="نام درس",related_name="classes", blank=False)
+    professor_name = models.ForeignKey(professor, on_delete=models.DO_NOTHING, verbose_name="نام استاد", related_name="classes", blank=False)
+    university_location = models.ForeignKey(university, on_delete=models.DO_NOTHING, related_name="classes", verbose_name="مکان برگزاری", blank=False)
+    group_name = models.ForeignKey(group, on_delete=models.DO_NOTHING, related_name="classes", blank=False, verbose_name="نام گروه")
+
+    # ? date and time
+    lesson_day = models.CharField(max_length=10, choices=lesson_day_choices, default=lesson_day_choices.SATURDAY, verbose_name="روز برگزاری کلاس")
+    lesson_time = models.CharField(max_length=100, verbose_name="ساعت برگزاری")
+
+    capacity = models.SmallIntegerField(blank=False, verbose_name="ظرفیت")
+    class_code = models.SmallIntegerField(blank=False, verbose_name="کد ارائه")
+    class_number = models.SmallIntegerField(blank=False, verbose_name="شماره کلاس")
+    semester = models.SmallIntegerField(blank=False, verbose_name="نیمسال")
+
+    created = jmodels.jDateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
+    modified = jmodels.jDateTimeField(auto_now=True, verbose_name="تاریخ تغییر")
+
+    def __str__(self):
+        return f'کلاس {self.lesson_code} با استاد {self.professor_name}'
+
+# todo - student model functions
 
 @receiver(post_save, sender=student)
 def set_last_year(sender, instance, **kwargs):
@@ -131,7 +212,6 @@ def set_last_year(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=student)
 def set_student_number(sender, instance, **kwargs):
-
     if hasattr(instance, 'student_number') and not instance.student_number:
         part_1 = str(instance.entrance_year)[1:4]
         part_2 = str(instance.university.code)
@@ -151,14 +231,16 @@ def set_student_number(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=student)
 def set_entrance_year(sender, instance, **kwargs):
-    if not instance.entrance_year and hasattr(instance, "entrance_year"):
+    if hasattr(instance, "entrance_year") and not instance.entrance_year:
         instance.entrance_year = jmodels.jdatetime.date.today()
 
 
 
+# todo - professor model functions
+
 @receiver(pre_save, sender=professor)
 def set_professor_code(sender, instance, **kwargs):
-    if not instance.professor_code and hasattr(instance, "professor_code"):
+    if hasattr(instance, "professor_code") and not instance.professor_code:
         part_1 = str(instance.date_of_birth)[:4]
         part_2 = str(instance.created)[1:4]
         part_3 = "100"
@@ -179,6 +261,43 @@ def set_professor_code(sender, instance, **kwargs):
 def set_created(sender, instance, **kwargs):
     if not instance.created:
         instance.created = jmodels.jdatetime.datetime.now()
+
+
+
+# todo - lesson model functions
+
+@receiver(pre_save, sender=lesson)
+def set_lesson_code(sender, instance, **kwrage):
+    if hasattr(instance, "code") and not instance.code:
+        part_1 = '491'
+        part_2 = '052'
+        part_3 = str(instance.unit)
+        part_4 = "100"
+
+        try:
+            last_code = lesson.objects.all().order_by("-code")
+        except TypeError:
+            pass
+
+        if last_code:
+            part_4 = str(int(last_code[0].code[8:]) + 1)
+
+        instance.code = part_1 + part_2 + part_3 + part_4
+
+
+
+# # todo - student_lesson functions
+# @receiver(pre_save, sender=student_lessons)
+# def set_semester(sender, instance, **kwargs):
+#     today_date_month = jmodels.jdatetime.date.today().month
+#     today_date_year = str(jmodels.jdatetime.date.today().year)
+
+#     if 11 <= today_date_month <= 12 or 1 <= today_date_month <= 3:
+#         today_date_year += '2'
+#     elif 6 <= today_date_month <= 10:
+#         today_date_year += "1"
+
+#     instance.semester = int(today_date_year[1:])
 
 
 
@@ -210,4 +329,3 @@ for model in models_to_handle:
     @receiver(post_delete, sender=model)
     def handle_user_delete(sender, instance, **kwargs):
         delete_user(sender, instance, **kwargs)
-

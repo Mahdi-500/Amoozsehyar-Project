@@ -5,10 +5,14 @@
 {% block content %}
     <a href="{% url 'website:register_student' %}">ثبت نام دانشجو</a>
     <a href="{% url 'website:register_professor' %}">ثبت نام استاد</a>
+    <a href="{% url 'website:create_lesson' %}">ایجاد درس</a>
+    <a href="{% url 'website:lesson_class' %}">ایجاد کلاس</a>
 
-    {% if message %}
-        <h2>
-            {{message}}
-        </h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+
     {% endif %}
+
 {% endblock content %}
