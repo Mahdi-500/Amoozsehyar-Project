@@ -37,3 +37,8 @@ class LessonAdmin(admin.ModelAdmin):
 @admin.register(lesson_class)
 class LessonClassAdmin(admin.ModelAdmin):
     list_display = ["lesson_code", "professor_name", "university_location", "group_name", "created", "modified"]
+
+@admin.register(Grade)
+class GradeAdmin(admin.ModelAdmin):
+    list_display = ["student_name", "lesson_name", "score"]
+    list_editable = ["score"]

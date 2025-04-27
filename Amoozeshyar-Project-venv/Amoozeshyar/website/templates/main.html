@@ -3,11 +3,16 @@
 {% block title %}Main page{% endblock title %}
 
 {% block content %}
-    <a href="{% url 'website:register_student' %}">ثبت نام دانشجو</a>
-    <a href="{% url 'website:register_professor' %}">ثبت نام استاد</a>
-    <a href="{% url 'website:create_lesson' %}">ایجاد درس</a>
-    <a href="{% url 'website:lesson_class' %}">ایجاد کلاس</a>
+    {% if group.name == 'admin' %}
+        <a href="{% url 'website:register_student' %}">ثبت نام دانشجو</a>
+        <a href="{% url 'website:register_professor' %}">ثبت نام استاد</a>
+        <a href="{% url 'website:create_lesson' %}">ایجاد درس</a>
+        <a href="{% url 'website:lesson_class' %}">ایجاد کلاس</a>
+    {% endif %}
 
+    {% if group.name == 'professor' %}
+        <a href="{% url 'website:professor_profile' %}">پروفایل</a>
+    {% endif %}
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{{ message.tags }}">{{ message }}</div>

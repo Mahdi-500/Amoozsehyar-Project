@@ -1,17 +1,15 @@
 from django import forms
-from .models import student, professor, lesson, lesson_class
+from .models import student, professor, lesson, lesson_class, Grade
 
 class StudentForm(forms.ModelForm):
     class Meta:
         model = student
-        fields = [
-            "first_name", "last_name", "student_id", "date_of_birth",
-            "photo", "marriage", "mobile", "address", "gender", "university", "major"
-        ]
+        fields = "__all__"
+        exclude = ["created", "modified", "role", "user", "last_year", "student_number"]
 
         help_texts = {
             "mobile": "مثال: 09121234567",
-            "date_of_birth":"مثال: 25-12-1357",
+            "date_of_birth":"مثال: 25-08-1357",
         }
 
     def clean(self):
@@ -20,11 +18,29 @@ class StudentForm(forms.ModelForm):
         last_name = clean_data.get("last_name")
         student_id = clean_data.get("student_id")
         
-        first_name = first_name.split(' ')
-        last_name = last_name.split(' ')
-        for i, j in first_name, last_name:
-            if not i.isalpha() or not j.isalpha():
-                raise forms.ValidationError("فقط حروف الفبا مجاز است")
+        space_fname = first_name.find(" ")
+        space_lname = last_name.find(" ")
+
+        # ? first name validation
+        if space_fname != -1:
+            first_name = first_name.split(' ')
+            for i in first_name:
+                if not i.isalpha():
+                    raise forms.ValidationError("فقط حروف الفبا در نام و نام خانوادگی مجاز است")
+        else:
+            if not first_name.isalpha():
+                raise forms.ValidationError("فقط حروف الفبا در نام و نام خانوادگی مجاز است")
+            
+
+        # ? last name validation
+        if space_lname != -1:
+            last_name = last_name.split(' ')
+            for i in last_name:
+                if not i.isalpha():
+                    raise forms.ValidationError("فقط حروف الفبا در نام و نام خانوادگی مجاز است")
+        else:
+            if not last_name.isalpha():
+                raise forms.ValidationError("فقط حروف الفبا در نام و نام خانوادگی مجاز است")
         
         if not student_id.isdigit():
             raise forms.ValidationError("فقط عدد مجاز است")
@@ -37,14 +53,11 @@ class ProfessorForm(forms.ModelForm):
 
     class Meta:
         model = professor
-        fields = [
-            "first_name", "last_name", "date_of_birth",
-            "professor_id", "photo", "professor_major",
-            "email", "phone", "universities"
-        ]
+        fields = "__all__"
+        exclude = ['created', 'modified', 'role', 'user', 'professor_code']
 
         widgets = {
-            "universities": forms.CheckboxSelectMultiple
+            "universities": forms.CheckboxSelectMultiple,
         }
 
         help_texts = {
@@ -59,6 +72,11 @@ class ProfessorForm(forms.ModelForm):
         major = clean_data.get("professor_major")
         professor_id = clean_data.get("professor_id")
 
+        student_object = student.objects.all().filter(student_id=professor_id)
+
+        if student_object:
+            raise forms.ValidationError("کد ملی را با دقت وارد کنید")
+        
         if not first_name.isalpha() or not last_name.isalpha():
             raise forms.ValidationError("فقط حروف الفبا مجاز است")
         
@@ -127,7 +145,6 @@ class LessonClassFrom(forms.ModelForm):
     def clean(self):
         clean_date = super().clean()
         time = clean_date.get("lesson_time")
-        day = clean_date.get("lesson_day")
         index = [i for i,x in enumerate(time) if x == ":"]
         temp = time.find("تا")
 
@@ -143,7 +160,7 @@ class LessonClassFrom(forms.ModelForm):
         if temp < 0:
             raise forms.ValidationError("کلمه ' تا ' حتما باید درج شود")
         
-        if temp != 5:
+        if temp != 5 and temp != 6:
             raise forms.ValidationError("کلمه ' تا ' را براساس فرمت داده شده در جای مناسب قرار دهید")
         
         if not first_time_hour.isdigit() or not first_time_minute.isdigit() or not second_time_hour.isdigit() or not second_time_minute.isdigit():
@@ -154,3 +171,25 @@ class LessonClassFrom(forms.ModelForm):
         
         if 1 > int(first_time_minute) > 59 or 1 > int(second_time_minute) > 59:
             raise forms.ValidationError("مقدار دقیقه باید بین 1 تا 59 باشید")
+        
+
+
+class GradeForm(forms.ModelForm):
+    class Meta:
+        model = Grade
+        fields = "__all__"
+        exclude = ['created', 'modified']
+
+    
+    def clean(self):
+        clean_data = super().clean()
+        score = clean_data.get["score"]
+
+        if 0 > score > 20:
+            raise forms.ValidationError("نمره باید بین 0 تا 20 باشد")
+        
+
+
+class LoginForm(forms.Form):
+    username = forms.CharField(label="نام کاربری", required=True)
+    password = forms.CharField(widget=forms.PasswordInput, label="رمز عبور", required=True)

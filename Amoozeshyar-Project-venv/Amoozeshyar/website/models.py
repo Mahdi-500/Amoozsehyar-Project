@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import UniqueConstraint
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
@@ -107,10 +109,11 @@ class professor(models.Model):
     # ? university related information
     professor_code = models.CharField(max_length=10, primary_key=True, default=None, verbose_name="کد استاد")    # ? autofill - primary key
     universities = models.ManyToManyField(university, related_name="professor", blank=False, verbose_name="دانشگاه(های) مشغول به تحصیل")
+    role = models.CharField(max_length=7, default="professor")
 
     class Meta:
         indexes = [models.Index(
-            fields=["professor_code"]
+            fields=["professor_code", "professor_id"]
         )]
 
     def __str__(self):
@@ -154,13 +157,14 @@ class student(models.Model):
     major = models.ForeignKey(major,on_delete=models.DO_NOTHING, related_name="student", default=None, verbose_name="رشته", blank=False)  
     # credit =  # ! auto calculate
     # average_score =   # ! auto calculate
+    role = models.CharField(max_length=7, default="student")
     university = models.ForeignKey(university,on_delete=models.DO_NOTHING, related_name="student", default=None, verbose_name="دانشگاه", blank=False)
-    status = models.CharField(max_length=5, blank=False, choices=status_choices, default=status_choices.STUDYING)
+    status = models.CharField(max_length=5, blank=False, choices=status_choices, default=status_choices.STUDYING, verbose_name="وضعیت تحصیل")
 
 
     class Meta:
         indexes = [models.Index(
-            fields=["student_number"]
+            fields=["student_number", "student_id"]
         )]
 
     
@@ -192,13 +196,34 @@ class lesson_class(models.Model):
     capacity = models.SmallIntegerField(blank=False, verbose_name="ظرفیت")
     class_code = models.SmallIntegerField(blank=False, verbose_name="کد ارائه")
     class_number = models.SmallIntegerField(blank=False, verbose_name="شماره کلاس")
-    semester = models.SmallIntegerField(blank=False, verbose_name="نیمسال")
+    semester = models.SmallIntegerField(blank=True, verbose_name="نیمسال")
 
     created = jmodels.jDateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
     modified = jmodels.jDateTimeField(auto_now=True, verbose_name="تاریخ تغییر")
 
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["class_code", "semester"],
+                name="unique_ClassCode_semester",
+            )
+        ]
+
+
     def __str__(self):
         return f'کلاس {self.lesson_code} با استاد {self.professor_name}'
+    
+
+
+class Grade(models.Model):
+    student_name = models.ForeignKey(student, verbose_name="دانجشو", on_delete=models.DO_NOTHING, related_name="grade")
+    lesson_name = models.ForeignKey(lesson_class, verbose_name="درس", on_delete=models.DO_NOTHING, related_name="grade")
+    score = models.SmallIntegerField(blank=False, verbose_name="نمره")
+    modified = jmodels.jDateTimeField(auto_now=True, verbose_name="تاریخ تغییر")
+    created = jmodels.jDateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
+
+
 
 # todo - student model functions
 
@@ -286,18 +311,18 @@ def set_lesson_code(sender, instance, **kwrage):
 
 
 
-# # todo - student_lesson functions
-# @receiver(pre_save, sender=student_lessons)
-# def set_semester(sender, instance, **kwargs):
-#     today_date_month = jmodels.jdatetime.date.today().month
-#     today_date_year = str(jmodels.jdatetime.date.today().year)
+# todo - lesson_class functions
+@receiver(pre_save, sender=lesson_class)
+def set_semester(sender, instance, **kwargs):
+    today_date_month = jmodels.jdatetime.date.today().month
+    today_date_year = str(jmodels.jdatetime.date.today().year)
+    
+    if 11 <= today_date_month <= 12 or 1 <= today_date_month <= 3:
+        today_date_year += '2'
+    elif 6 <= today_date_month <= 10:
+        today_date_year += "1"
 
-#     if 11 <= today_date_month <= 12 or 1 <= today_date_month <= 3:
-#         today_date_year += '2'
-#     elif 6 <= today_date_month <= 10:
-#         today_date_year += "1"
-
-#     instance.semester = int(today_date_year[1:])
+    instance.semester = int(today_date_year[1:])
 
 
 

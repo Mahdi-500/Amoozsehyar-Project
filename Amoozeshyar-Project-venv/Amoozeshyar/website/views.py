@@ -1,13 +1,18 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
-from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User, Group
 from .models import *
 from .forms import *
 
 # Create your views here.
 def MainView(request):
-    return render(request, "main.html")
+    user = User.objects.get(username=request.user.username)
+    user_group = user.groups.get()
+    return render(request, "main.html", {"group":user_group, "user":user})
+
 
 
 def StudentFormView(request):
@@ -28,6 +33,13 @@ def StudentFormView(request):
 
             new_student.user = new_user
             new_student.save()
+            
+            # ? adding a group
+            if not Group.objects.filter(name='student').exists():
+                Group.objects.create(name='student')
+
+            student_group = Group.objects.get(name='student')
+            new_student.user.groups.add(student_group)
 
             messages.success(request, "ثبت نام موفقیت آمیز بود")
             return redirect('website:main') 
@@ -38,7 +50,9 @@ def StudentFormView(request):
     return render(request, "register_student.html", {"form":form})
 
 
+
 def ProfessorFormView(request):
+
     if request.method == "POST":
         form = ProfessorForm(request.POST, request.FILES)
         if form.is_valid():
@@ -59,6 +73,13 @@ def ProfessorFormView(request):
             new_professor.user = new_user
             new_professor.save()
             new_professor.universities.set(form.cleaned_data["universities"])
+
+            # ? adding a group
+            if not Group.objects.filter(name='professor').exists():
+                Group.objects.create(name='professor')
+
+            professor_group = Group.objects.get(name='professor')
+            new_professor.user.groups.add(professor_group)
             
             messages.success(request, "ثبت نام موفقیت آمیز بود")
             return redirect('website:main')
@@ -66,6 +87,7 @@ def ProfessorFormView(request):
         form = ProfessorForm()
 
     return render(request, "register_professor.html", {"form":form})
+
 
 
 def LessonFormView(request):
@@ -96,11 +118,15 @@ def LessonClassFromView(request):
         #flag = False
 
         if form.is_valid():
-
+            
+            new_lesson_class = form.save(commit=False)
             day = form.cleaned_data["lesson_day"]
             time = form.cleaned_data["lesson_time"]
             class_number = form.cleaned_data["class_number"]
             semester = form.cleaned_data["semester"]
+
+            if semester == ' ':
+                set_semester(lesson_class, new_lesson_class)
 
             # ? checking class overlap
             classes = lesson_class.objects.all().filter(semester=semester,
@@ -132,6 +158,74 @@ def LessonClassFromView(request):
             #     messages.info(request, i)
             #     return render(request, "add_lesson_class.html", {'form':form})
             
+            form.save()
+            messages.success(request, "کلاس با موفقیت ایجاد شد")
+            return redirect("website:main")
     else:
         form = LessonClassFrom()
-    return render(request, "add_lesson_class.html", {'form':form})
+        return render(request, "add_lesson_class.html", {'form':form})
+
+
+
+
+def LoginFromView(request):
+
+    if request.method == "POST":
+        form = LoginForm(request.POST)
+
+        if form.is_valid():
+            
+            user = authenticate(username=form.cleaned_data["username"], password=form.cleaned_data["password"])
+            if user is not None:
+                login(request, user)
+                request.user = user
+                messages.success(request, "وارد شدید")
+                return redirect("website:main")
+            
+            else:
+                messages.warning(request, "نام کاربری یا رمز عبور صحیح نیست")
+                return redirect("website:login")
+            
+    else:
+        form=LoginForm()
+        return render(request, "Login.html", {'form':form})
+    
+    
+
+def ProfessorProfile(request):
+    username = User.objects.get(username=request.user.username)
+    professor_name = username.professor
+    p_university_list = professor_name.universities.all()
+
+    context = {
+        "professor":professor_name,
+        "p_university":p_university_list,
+    }
+    return render(request, "professor/profile.html", context)
+
+
+
+def ProfessorLessonList(request, p_code, u_code):
+    professor_name = professor.objects.get(professor_code=p_code)
+    l_university = university.objects.get(code=u_code)
+    lesson_list = professor_name.classes.all()
+
+    context = {
+        "list":lesson_list,
+        "l_university":l_university,
+    }
+    
+    return render(request, "professor/professor_lesson_list.html", context)
+
+
+
+def LessonDetails(request, code):
+    lesson_details = lesson.objects.get(code=code)
+    return render(request, "lesson_details.html", {"lesson":lesson_details})
+    
+
+
+
+def GradeFormView(request):
+    if request.method == "POST":
+        form = GradeForm(request.POST)

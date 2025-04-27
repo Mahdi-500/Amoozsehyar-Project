@@ -3,9 +3,13 @@ from . import views
 
 app_name = "website"
 urlpatterns = [
-    path("", views.MainView, name="main"),
+    path("", views.LoginFromView, name="login"),
+    path("main/", views.MainView, name="main"),
     path("register-student", views.StudentFormView, name="register_student"),
     path("register-professor", views.ProfessorFormView, name="register_professor"),
     path("create_lesson", views.LessonFormView, name="create_lesson"),
-    path("create_class", views.LessonClassFromView, name="lesson_class")
+    path("create_class", views.LessonClassFromView, name="lesson_class"),
+    path("professor/profile", views.ProfessorProfile, name="professor_profile"),
+    path("professor/classes/<str:p_code>/<str:u_code>", views.ProfessorLessonList, name="professor_lessons"),
+    path('professor/lesson/details/<str:code>', views.LessonDetails, name="lesson_detail"),
 ]
