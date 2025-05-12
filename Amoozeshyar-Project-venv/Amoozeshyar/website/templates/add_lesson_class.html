@@ -12,9 +12,10 @@
     </ul>
     {% endif %}
     
-    <form method="POST", enctype="multipart/form-data">
+    <form method="POST">
         {% csrf_token %}
         {{form.as_p}}
         <button type="Submit">ثبت</button>
     </form>
+
 {% endblock content %}

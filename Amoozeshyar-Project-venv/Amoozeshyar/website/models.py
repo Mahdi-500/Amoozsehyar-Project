@@ -107,7 +107,7 @@ class professor(models.Model):
 
     # ? university related information
     code = models.CharField(max_length=10, primary_key=True, default=None, verbose_name="کد استاد")    # ? autofill - primary key
-    universities = models.ManyToManyField(university, related_name="professor", blank=False, verbose_name="دانشگاه(های) مشغول به تحصیل")
+    universities = models.ManyToManyField(university, related_name="professor", blank=False, verbose_name="دانشگاه(های) مشغول به تدریس")
     role = models.CharField(max_length=10, default="professor")
 
     class Meta:
@@ -341,7 +341,7 @@ def set_semester(sender, instance, **kwargs):
 
     elif 6 <= today_date_month <= 10:
         today_date_year += "1"
-
+        
     instance.semester = int(today_date_year[1:])
 
 

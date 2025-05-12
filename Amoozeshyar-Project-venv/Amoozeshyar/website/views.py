@@ -125,15 +125,19 @@ def LessonClassFromView(request):
             time = form.cleaned_data["lesson_time"]
             class_number = form.cleaned_data["class_number"]
             semester = form.cleaned_data["semester"]
+            class_location = form.cleaned_data["university_location"]
 
-            if semester == ' ':
+            if semester == None:
                 set_semester(lesson_class, new_lesson_class)
+                semester = new_lesson_class.semester
+
 
             # ? checking class overlap
-            classes = lesson_class.objects.all().filter(semester=semester,
+            classes = lesson_class.objects.filter(semester=semester,
                                                         lesson_day=day,
                                                         lesson_time=time,
                                                         class_number=class_number,
+                                                        university_location=class_location
                                                         )
             if classes:
                 form = LessonClassFrom(request.POST)
@@ -168,10 +172,12 @@ def LessonClassFromView(request):
             
             messages.success(request, "کلاس با موفقیت ایجاد شد")
             return redirect("website:main")
-            
+        
     else:
         form = LessonClassFrom()
         return render(request, "add_lesson_class.html", {'form':form})
+    
+    return render(request, "add_lesson_class.html", {'form':form})
 
 
 
@@ -202,6 +208,8 @@ def LoginFromView(request):
     else:
         form=LoginForm()
         return render(request, "Login.html", {'form':form})
+    
+    return render(request, "Login.html", {"form":form})
     
     
 
@@ -283,3 +291,6 @@ def LessonSearchView(request):
     else:
         form = LessonSearchForm()
         return render(request, "lesson_search_result.html", {"form":form, "flag":flag})
+    
+    return render(request, "lesson_search_result.html", {"form":form, "flag":flag})
+

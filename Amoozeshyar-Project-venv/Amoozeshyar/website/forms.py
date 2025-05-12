@@ -13,6 +13,11 @@ class StudentForm(forms.ModelForm):
             "date_of_birth":"مثال: 25-08-1357",
         }
 
+        widget = {
+            "date_of_birth":forms.TextInput(attrs={
+                "dir":"rtl"})
+        }
+
     def clean(self):
         clean_data = super().clean()
         first_name = clean_data.get("first_name")
@@ -59,6 +64,8 @@ class ProfessorForm(forms.ModelForm):
 
         widgets = {
             "universities": forms.CheckboxSelectMultiple,
+            "date_of_birth":forms.TextInput(attrs={
+                "dir":"rtl"})
         }
 
         help_texts = {
@@ -143,7 +150,6 @@ class LessonClassFrom(forms.ModelForm):
             })
         }
 
-
     def clean(self):
         clean_date = super().clean()
         time = clean_date.get("lesson_time")
@@ -155,7 +161,7 @@ class LessonClassFrom(forms.ModelForm):
         first_time_minute = time[index[0] + 1:index[0] + 3]
         second_time_hour = time[index[1] - 2:index[1]]
         second_time_minute = time[index[1] + 1:]
-
+        
         if len(index) != 2:
             raise forms.ValidationError("فرمت وارد شده صحیح نیست")
         
@@ -168,10 +174,10 @@ class LessonClassFrom(forms.ModelForm):
         if not first_time_hour.isdigit() or not first_time_minute.isdigit() or not second_time_hour.isdigit() or not second_time_minute.isdigit():
             raise forms.ValidationError("فرمت وارد شده صحیح نیست")
         
-        if 1 > int(first_time_hour) > 24 or 1 > int(second_time_hour) > 24:
+        if (int(first_time_hour) > 24 or int(first_time_hour) < 1) or (int(second_time_hour) > 24 or int(second_time_hour) < 1):
             raise forms.ValidationError("مقدار ساعت باید بین 1 تا 24 باشد")
         
-        if 1 > int(first_time_minute) > 59 or 1 > int(second_time_minute) > 59:
+        if (int(first_time_minute) > 59 or int(first_time_minute) < 0) or (int(second_time_minute) > 59 or int(second_time_minute) < 0):
             raise forms.ValidationError("مقدار دقیقه باید بین 1 تا 59 باشید")
         
 
