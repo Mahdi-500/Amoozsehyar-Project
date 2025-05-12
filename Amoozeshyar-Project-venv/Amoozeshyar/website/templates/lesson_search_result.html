@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}جستجوی درس{% endblock title %}
+
+{% block content %}
+
+    <form method="POST", enctype="multipart/form-data">
+        {% csrf_token %}
+        {{form.as_p}}
+        <button type="Submit">جتسجو</button>
+    </form>
+
+    {% if flag %}
+        {% if result %}
+            {% for r in result  %}
+                کد درس: {{r.lesson_code}}  &nbsp;&nbsp;  نام استاد: {{r.professor_name}}  &nbsp;&nbsp;  روز تشکیل: {{r.lesson_day}}
+                <br><br>
+            {% endfor %}
+        {% else %}
+            <h2>درسی پیدا نشد</h2>
+        {% endif %}
+    {% endif %}
+{% endblock content %}

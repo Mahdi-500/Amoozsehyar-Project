@@ -8,4 +8,11 @@
         {{form.as_p}}
         <button type="submit">وارد شوید</button>
     </form>
+
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+
+{% endif %}
 {% endblock content %}

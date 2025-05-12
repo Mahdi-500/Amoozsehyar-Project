@@ -1,4 +1,5 @@
 from django import forms
+from django_jalali.db import models as jmodels
 from .models import student, professor, lesson, lesson_class, Grade
 
 class StudentForm(forms.ModelForm):
@@ -54,7 +55,7 @@ class ProfessorForm(forms.ModelForm):
     class Meta:
         model = professor
         fields = "__all__"
-        exclude = ['created', 'modified', 'role', 'user', 'professor_code']
+        exclude = ['created', 'modified', 'role', 'user', 'code']
 
         widgets = {
             "universities": forms.CheckboxSelectMultiple,
@@ -121,8 +122,9 @@ class LessonForm(forms.ModelForm):
         name = clean_data.get("name")
 
         for name in name.split(" "):
-            if not name.isalpha() or not name.isalnum():
+            if not name.isalpha() and not name.isalnum():
                 raise forms.ValidationError(" ترکیب عدد با حروف الفبا یا فقط حروف الفبا مجاز است")
+            
             
 
 class LessonClassFrom(forms.ModelForm):
@@ -132,7 +134,7 @@ class LessonClassFrom(forms.ModelForm):
         exclude = ['created', 'modified']
 
         help_texts = {
-            "lesson_time":"مثال: 09:30 تا 15:05"
+            "lesson_time":"مثال: 09:05 تا 15:00"
         }
 
         widgets = {
@@ -193,3 +195,40 @@ class GradeForm(forms.ModelForm):
 class LoginForm(forms.Form):
     username = forms.CharField(label="نام کاربری", required=True)
     password = forms.CharField(widget=forms.PasswordInput, label="رمز عبور", required=True)
+
+
+
+LESSON_TYPE_CHOICES = [("", "----------------"), 
+                    ("اصلی", "اصلی"),
+                    ("پایه", "پایه"),
+                    ("عمومی", "عمومی"),
+                    ("تخصصی", "تخصصی"),
+                    ("اختیاری", "اختیاری")]
+
+UNIT_TYPE_CHOICES = [("", "----------------"),
+                    ("نظری", "نظری"),
+                    ("نظری-عملی", "نظری - عملی"),
+                    ("عملی", "عملی"),
+                    ("آز", "آزمایشگاهی"),
+                    ("کارآموزی", "کارآموزی")]
+class LessonSearchForm(forms.Form):
+    
+    today_date_month = jmodels.jdatetime.date.today().month
+    today_date_year = str(jmodels.jdatetime.date.today().year)
+    
+    if 11 <= today_date_month <= 12:
+        today_date_year[1:] += '2'
+        
+    elif 1 <= today_date_month <= 3:
+        year = str(int(today_date_year) - 1)[1:]
+        today_date_year = year + "2"
+
+    elif 6 <= today_date_month <= 10:
+        today_date_year[1:] += "1"
+
+    query_lesson_code = forms.IntegerField(label="کد درس", required=False)
+    query_lesson_name = forms.CharField(label="نام درس", required=False)
+    query_lesson_semester= forms.CharField(label="نیمسال", initial= today_date_year, required=True)
+    #query_lesson_location = forms.CharField(label="")
+    query_unit_type = forms.ChoiceField(choices=UNIT_TYPE_CHOICES, label="نوع واحد", required=False)
+    query_lesson_type = forms.ChoiceField(choices=LESSON_TYPE_CHOICES, label="نوع درس", required=False)

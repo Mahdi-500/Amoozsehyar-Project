@@ -1,5 +1,6 @@
+from django.db.models import Q
+from django.db import IntegrityError
 from django.shortcuts import render, redirect
-from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
@@ -65,7 +66,7 @@ def ProfessorFormView(request):
             new_user = User.objects.create_user(
                 first_name = form.cleaned_data["first_name"],
                 last_name = form.cleaned_data["last_name"],
-                username = new_professor.professor_code,
+                username = new_professor.code,
                 password=str(form.cleaned_data["date_of_birth"])[:4]
             )
 
@@ -158,9 +159,16 @@ def LessonClassFromView(request):
             #     messages.info(request, i)
             #     return render(request, "add_lesson_class.html", {'form':form})
             
-            form.save()
+            try:
+                form.save()
+            except IntegrityError:
+                messages.error(request, "این کد ارائه در این نیمسال وجود دارد")
+                form = LessonClassFrom(request.POST)
+                return render(request, "add_lesson_class.html", {'form':form})
+            
             messages.success(request, "کلاس با موفقیت ایجاد شد")
             return redirect("website:main")
+            
     else:
         form = LessonClassFrom()
         return render(request, "add_lesson_class.html", {'form':form})
@@ -177,11 +185,16 @@ def LoginFromView(request):
             
             user = authenticate(username=form.cleaned_data["username"], password=form.cleaned_data["password"])
             if user is not None:
-                login(request, user)
-                request.user = user
-                messages.success(request, "وارد شدید")
-                return redirect("website:main")
-            
+                try:
+                    user.groups.get()
+                    login(request, user)
+                    request.user = user
+                    messages.success(request, "وارد شدید")
+                    return redirect("website:main")
+
+                except Group.DoesNotExist:
+                    messages.warning(request, "گروهی برای شما تعیین نشده است")
+                    return redirect("website:login")
             else:
                 messages.warning(request, "نام کاربری یا رمز عبور صحیح نیست")
                 return redirect("website:login")
@@ -206,7 +219,7 @@ def ProfessorProfile(request):
 
 
 def ProfessorLessonList(request, p_code, u_code):
-    professor_name = professor.objects.get(professor_code=p_code)
+    professor_name = professor.objects.get(code=p_code)
     l_university = university.objects.get(code=u_code)
     lesson_list = professor_name.classes.all()
 
@@ -225,7 +238,48 @@ def LessonDetails(request, code):
     
 
 
-
 def GradeFormView(request):
     if request.method == "POST":
         form = GradeForm(request.POST)
+
+
+
+def LessonSearchView(request):
+    flag = False
+    if request.method == "POST":
+        flag = True
+        form = LessonSearchForm(data=request.POST)
+        if form.is_valid():
+
+            # ? decides to use which model for searching
+            if form.cleaned_data["query_lesson_code"] != None:
+                result = lesson_class.objects.filter(Q(lesson_code=form.cleaned_data["query_lesson_code"]) &
+                                                    Q(semester=form.cleaned_data["query_lesson_semester"]))
+            else:
+                if form.cleaned_data["query_lesson_name"] != "":
+                    lessons = lesson.objects.filter(Q(name__contains=form.cleaned_data["query_lesson_name"]) |
+                                                    Q(unit_type=form.cleaned_data["query_unit_type"]) |
+                                                    Q(lesson_type=form.cleaned_data["query_lesson_type"]))
+                else:
+                    lessons = lesson.objects.filter(Q(unit_type=form.cleaned_data["query_unit_type"]) |
+                                                    Q(lesson_type=form.cleaned_data["query_lesson_type"]))
+                
+                result = []
+                temp = []
+                for i in lessons:
+                    temp.append(lesson_class.objects.filter(Q(lesson_code=i.code) &
+                                                                Q(semester=form.cleaned_data["query_lesson_semester"])))
+                for i in temp:
+                    for j in range(0, len(i)):
+                        result.append(i[j])
+            
+            context = {
+                "result":result, 
+                "form":form,
+                "flag":flag
+            }
+            return render(request, "lesson_search_result.html", context)
+
+    else:
+        form = LessonSearchForm()
+        return render(request, "lesson_search_result.html", {"form":form, "flag":flag})

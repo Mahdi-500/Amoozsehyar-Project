@@ -1,19 +1,18 @@
 from django.db import models
 from django.db.models import UniqueConstraint
-from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django_resized import ResizedImageField
 from django_jalali.db import models as jmodels
 from phonenumber_field.modelfields import PhoneNumberField
-import os, shutil, random
+import os, shutil
 
 # Create your models here.
 class major(models.Model):
     name = models.CharField(max_length=255, blank=False, verbose_name="نام رشته")
     code = models.PositiveIntegerField(verbose_name="کد رشته", primary_key=True, blank=False, unique=True)
-    capacity = models.SmallIntegerField(verbose_name="ظرفیت", blank=False)
+    capacity = models.PositiveSmallIntegerField(verbose_name="ظرفیت", blank=False)
 
     class Meta:
         indexes = [models.Index(
@@ -41,7 +40,7 @@ class university(models.Model):
 
 class group(models.Model):
     name = models.CharField(max_length=100, blank=False, verbose_name="نام گروه")
-    code = models.SmallIntegerField(blank=False, verbose_name="کد گروه", default=0)
+    code = models.PositiveSmallIntegerField(blank=False, verbose_name="کد گروه", default=0)
 
     def __str__(self):
         return f'{self.name}({self.code})'
@@ -67,7 +66,7 @@ class lesson(models.Model):
     
     name = models.CharField(max_length=255, blank=False, verbose_name="نام درس")
     code = models.CharField(max_length=10, primary_key=True, blank=False, verbose_name="کد درس", default=None)     # ? autocomplete - primary key
-    unit = models.SmallIntegerField(verbose_name="تعداد واحد")
+    unit = models.PositiveSmallIntegerField(verbose_name="تعداد واحد")
     unit_type = models.CharField(max_length=11, choices=unit_type_choices, default=unit_type_choices.NAZARI, verbose_name="نوع واحد")
     lesson_type = models.CharField(max_length=9, choices=lesson_type_choices, default=lesson_type_choices.ASLI, verbose_name="نوع درس")
     pishniaz = models.ManyToManyField('self', blank=True, verbose_name="پیش نیاز")
@@ -107,13 +106,13 @@ class professor(models.Model):
     modified = jmodels.jDateTimeField(auto_now=True, verbose_name="تاریخ تغییر")
 
     # ? university related information
-    professor_code = models.CharField(max_length=10, primary_key=True, default=None, verbose_name="کد استاد")    # ? autofill - primary key
+    code = models.CharField(max_length=10, primary_key=True, default=None, verbose_name="کد استاد")    # ? autofill - primary key
     universities = models.ManyToManyField(university, related_name="professor", blank=False, verbose_name="دانشگاه(های) مشغول به تحصیل")
-    role = models.CharField(max_length=7, default="professor")
+    role = models.CharField(max_length=10, default="professor")
 
     class Meta:
         indexes = [models.Index(
-            fields=["professor_code", "professor_id"]
+            fields=["code", "professor_id"]
         )]
 
     def __str__(self):
@@ -153,11 +152,11 @@ class student(models.Model):
     # ? student's educational information
     student_number = models.CharField(max_length=12, primary_key=True, default=None, verbose_name="شماره دانشجویی")     # ? autofill - primary key
     entrance_year = jmodels.jDateField(auto_now_add=True, verbose_name="سال ورودی")
-    last_year = models.SmallIntegerField(verbose_name="آخرین سال تحصیل", null=True, blank=True)     # ? autofill - entrance year + 5
+    last_year = models.PositiveSmallIntegerField(verbose_name="آخرین سال تحصیل", null=True, blank=True)     # ? autofill - entrance year + 5
     major = models.ForeignKey(major,on_delete=models.DO_NOTHING, related_name="student", default=None, verbose_name="رشته", blank=False)  
     # credit =  # ! auto calculate
     # average_score =   # ! auto calculate
-    role = models.CharField(max_length=7, default="student")
+    role = models.CharField(max_length=10, default="student")
     university = models.ForeignKey(university,on_delete=models.DO_NOTHING, related_name="student", default=None, verbose_name="دانشگاه", blank=False)
     status = models.CharField(max_length=5, blank=False, choices=status_choices, default=status_choices.STUDYING, verbose_name="وضعیت تحصیل")
 
@@ -177,26 +176,38 @@ class lesson_class(models.Model):
 
     class lesson_day_choices(models.TextChoices):
         SATURDAY = "شنبه", "شنبه"
-        SUNDAY = "یکشنبه", "یکشنبه"
+        SUNDAY = "یک شنبه", "یکشنبه"
         MONDAY = "دوشنبه", "دوشنبه"
         TUESDAY = "سه شنبه", "سه شنبه"
         WEDNESDAY = "چهارشنبه", "چهارشنبه"
         THURSDAY = "پنج شنبه", "پنج شنبه"
 
+    class lesson_dgree_choices(models.TextChoices):
+        BACHELOR = "کارشناسی", "کارشناسی"
+        MASTER = "ارشد", "کارشناسی ارشد"
+        PHD = "دکتری", "دکتری"
+
+    class degree_type_choices(models.TextChoices):
+        PEYVASTE = "پیوسته", "پیوسته"
+        NA_PAYVASTE = "ناپیوسته", "ناپیوسته"
+
     # ? connected models    
-    lesson_code = models.ForeignKey(lesson, on_delete=models.DO_NOTHING, verbose_name="نام درس",related_name="classes", blank=False)
-    professor_name = models.ForeignKey(professor, on_delete=models.DO_NOTHING, verbose_name="نام استاد", related_name="classes", blank=False)
-    university_location = models.ForeignKey(university, on_delete=models.DO_NOTHING, related_name="classes", verbose_name="مکان برگزاری", blank=False)
-    group_name = models.ForeignKey(group, on_delete=models.DO_NOTHING, related_name="classes", blank=False, verbose_name="نام گروه")
+    lesson_code = models.ForeignKey(lesson, on_delete=models.CASCADE, verbose_name="نام درس",related_name="classes", blank=False)
+    professor_name = models.ForeignKey(professor, on_delete=models.CASCADE, verbose_name="نام استاد", related_name="classes", blank=False)
+    university_location = models.ForeignKey(university, on_delete=models.CASCADE, related_name="classes", verbose_name="مکان برگزاری", blank=False)
+    group_name = models.ForeignKey(group, on_delete=models.CASCADE, related_name="classes", blank=False, verbose_name="نام گروه")
 
     # ? date and time
     lesson_day = models.CharField(max_length=10, choices=lesson_day_choices, default=lesson_day_choices.SATURDAY, verbose_name="روز برگزاری کلاس")
     lesson_time = models.CharField(max_length=100, verbose_name="ساعت برگزاری")
 
-    capacity = models.SmallIntegerField(blank=False, verbose_name="ظرفیت")
-    class_code = models.SmallIntegerField(blank=False, verbose_name="کد ارائه")
-    class_number = models.SmallIntegerField(blank=False, verbose_name="شماره کلاس")
-    semester = models.SmallIntegerField(blank=True, verbose_name="نیمسال")
+    # ? class info
+    degree = models.CharField(max_length=8, choices=lesson_dgree_choices, default=lesson_dgree_choices.BACHELOR ,verbose_name="مقطع")
+    degree_type = models.CharField(max_length=8, choices=degree_type_choices, default=degree_type_choices.PEYVASTE, verbose_name="نوع مقطع")
+    capacity = models.PositiveSmallIntegerField(blank=False, verbose_name="ظرفیت")
+    class_code = models.PositiveSmallIntegerField(blank=False, verbose_name="کد ارائه")
+    class_number = models.PositiveSmallIntegerField(blank=False, verbose_name="شماره کلاس")
+    semester = models.PositiveSmallIntegerField(blank=True, verbose_name="نیمسال")
 
     created = jmodels.jDateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
     modified = jmodels.jDateTimeField(auto_now=True, verbose_name="تاریخ تغییر")
@@ -219,12 +230,16 @@ class lesson_class(models.Model):
 class Grade(models.Model):
     student_name = models.ForeignKey(student, verbose_name="دانجشو", on_delete=models.DO_NOTHING, related_name="grade")
     lesson_name = models.ForeignKey(lesson_class, verbose_name="درس", on_delete=models.DO_NOTHING, related_name="grade")
-    score = models.SmallIntegerField(blank=False, verbose_name="نمره")
+    score = models.PositiveSmallIntegerField(blank=False, verbose_name="نمره")
     modified = jmodels.jDateTimeField(auto_now=True, verbose_name="تاریخ تغییر")
     created = jmodels.jDateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
 
 
-
+#class student_choosing_lesson(models.Model):
+    pass
+    # student_name = models.ForeignKey(student, on_delete=models.DO_NOTHING, verbose_name="دانشجو", related_name="lesson")
+    # chosen_class = models.ManyToManyField(lesson_class, verbose_name="درس", related_name="students")
+    
 # todo - student model functions
 
 @receiver(post_save, sender=student)
@@ -265,20 +280,20 @@ def set_entrance_year(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=professor)
 def set_professor_code(sender, instance, **kwargs):
-    if hasattr(instance, "professor_code") and not instance.professor_code:
+    if hasattr(instance, "code") and not instance.code:
         part_1 = str(instance.date_of_birth)[:4]
         part_2 = str(instance.created)[1:4]
         part_3 = "100"
 
         try:
-            last_user = professor.objects.all().order_by("-professor_code")
+            last_user = professor.objects.all().order_by("-code")
         except TypeError:
             pass
 
         if last_user:
-            part_3 = str(int(last_user[0].professor_code[6:]) + 1)
+            part_3 = str(int(last_user[0].code[6:]) + 1)
 
-        instance.professor_code = part_1 + part_2 + part_3
+        instance.code = part_1 + part_2 + part_3
     
 
 
@@ -297,7 +312,7 @@ def set_lesson_code(sender, instance, **kwrage):
         part_1 = '491'
         part_2 = '052'
         part_3 = str(instance.unit)
-        part_4 = "100"
+        part_4 = '100'
 
         try:
             last_code = lesson.objects.all().order_by("-code")
@@ -305,7 +320,7 @@ def set_lesson_code(sender, instance, **kwrage):
             pass
 
         if last_code:
-            part_4 = str(int(last_code[0].code[8:]) + 1)
+            part_4 = str(int(last_code[0].code[7:]) + 1)
 
         instance.code = part_1 + part_2 + part_3 + part_4
 
@@ -317,8 +332,13 @@ def set_semester(sender, instance, **kwargs):
     today_date_month = jmodels.jdatetime.date.today().month
     today_date_year = str(jmodels.jdatetime.date.today().year)
     
-    if 11 <= today_date_month <= 12 or 1 <= today_date_month <= 3:
+    if 11 <= today_date_month <= 12:
         today_date_year += '2'
+
+    elif 1 <= today_date_month <= 3:
+        year = str(int(today_date_year) - 1)
+        today_date_year = year + "2"
+
     elif 6 <= today_date_month <= 10:
         today_date_year += "1"
 
