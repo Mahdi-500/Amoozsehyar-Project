@@ -19,6 +19,7 @@
 
     {% if group.name == 'student' %}
         <a href="{% url 'website:lesson_search' %}">جتسجوی کلاس درس</a>
+        <a href="{% url 'website:choosing_lesson' %}">انتخاب واحد</a>
     {% endif %}
 
     {% if messages %}

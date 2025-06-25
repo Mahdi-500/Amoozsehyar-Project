@@ -3,7 +3,6 @@ from django.db import IntegrityError
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from .models import *
 from .forms import *
@@ -175,11 +174,9 @@ def LessonClassFromView(request):
         
     else:
         form = LessonClassFrom()
-        return render(request, "add_lesson_class.html", {'form':form})
-    
+
     return render(request, "add_lesson_class.html", {'form':form})
-
-
+    
 
 
 def LoginFromView(request):
@@ -207,12 +204,11 @@ def LoginFromView(request):
             
     else:
         form=LoginForm()
-        return render(request, "Login.html", {'form':form})
-    
-    return render(request, "Login.html", {"form":form})
-    
-    
 
+    return render(request, "Login.html", {'form':form})
+    
+    
+    
 def ProfessorProfile(request):
     username = User.objects.get(username=request.user.username)
     professor_name = username.professor
@@ -290,7 +286,78 @@ def LessonSearchView(request):
 
     else:
         form = LessonSearchForm()
-        return render(request, "lesson_search_result.html", {"form":form, "flag":flag})
-    
-    return render(request, "lesson_search_result.html", {"form":form, "flag":flag})
 
+    return render(request, "lesson_search_result.html", {"form":form, "flag":flag})    
+
+
+
+def ChoosingLessonFormView(request):
+
+
+    if request.method == "POST":
+        form_searching = LessonSearchForm(data=request.POST)
+        form_choosing = ChoosingLessonForm()
+
+        result = []
+        temp = []
+        if form_searching.is_valid():
+            if form_searching.cleaned_data["query_lesson_code"] != None:
+                temp = lesson_class.objects.filter(Q(lesson_code=form_searching.cleaned_data["query_lesson_code"]) &
+                                                            Q(semester=form_searching.cleaned_data["query_lesson_semester"]))
+                for i in temp:
+                    result.append(i)
+            else:
+                if form_searching.cleaned_data["query_lesson_name"] != "":
+                    lessons = lesson.objects.filter(Q(name__contains=form_searching.cleaned_data["query_lesson_name"]))
+                
+                
+                for i in lessons:
+                    temp.append(lesson_class.objects.filter(Q(lesson_code=i.code) &
+                                                                Q(semester=form_searching.cleaned_data["query_lesson_semester"])))
+                for i in temp:
+                    for j in range(0, len(i)):
+                        result.append(i[j])
+
+            choices = []
+            for i in result:
+                choices.append((i.id,f"نام استاد: {i.professor_name}   ---   کد درس: {i.lesson_code.code}   ---   زمان برگزاری: {i.lesson_day} - {i.lesson_time}"))
+
+            form_choosing.fields["chosen_lesson"].choices = choices
+            request.session['lesson_choices'] = choices
+
+            if result == []:
+                flag = True
+            else:
+                flag = False
+                
+            context = {
+                "form_searching": form_searching,
+                "form_choosing": form_choosing,
+                "flag":flag
+            }
+            return render(request, "choosing_lesson.html", context)
+    
+    else:
+        form_searching = LessonSearchForm()
+
+    return render(request, "lesson_search_result.html", {"form":form_searching})
+
+
+
+# todo - this is for saving the chosen lesson in previous view
+def SavingTheChosenLessonView(request):
+    if request.method == "POST":
+        choices = request.session.get("lesson_choices")
+        form = ChoosingLessonForm(data=request.POST)
+        form.fields["chosen_lesson"].choices = choices
+
+        if form.is_valid():
+            student_info = student.objects.get(student_number = request.user.username)
+            class_info = lesson_class.objects.get(id=form.cleaned_data["chosen_lesson"])
+            student_choosing_lesson.objects.create(student_name=student_info,
+                                                            chosen_class=class_info,
+                                                            semester=form.cleaned_data["lesson_semester"])
+            messages.success(request, "درس با موفقیت انتخاب شد")
+            return redirect("website:choosing_lesson")
+            
+    return redirect("website:choosing_lesson")

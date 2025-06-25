@@ -221,6 +221,11 @@ class lesson_class(models.Model):
             )
         ]
 
+        indexes = [models.Index(fields=[
+            "class_code", "semester"
+        ])
+        ]
+
 
     def __str__(self):
         return f'کلاس {self.lesson_code} با استاد {self.professor_name}'
@@ -235,11 +240,13 @@ class Grade(models.Model):
     created = jmodels.jDateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
 
 
-#class student_choosing_lesson(models.Model):
-    pass
-    # student_name = models.ForeignKey(student, on_delete=models.DO_NOTHING, verbose_name="دانشجو", related_name="lesson")
-    # chosen_class = models.ManyToManyField(lesson_class, verbose_name="درس", related_name="students")
+class student_choosing_lesson(models.Model):
+    student_name = models.ForeignKey(student, on_delete=models.CASCADE, verbose_name="دانشجو", related_name="lesson")
+    chosen_class = models.ForeignKey(lesson_class,on_delete=models.CASCADE, verbose_name="درس", related_name="students")
+    semester = models.SmallIntegerField(blank=False, default=0, verbose_name="نیمسال")
     
+
+
 # todo - student model functions
 
 @receiver(post_save, sender=student)

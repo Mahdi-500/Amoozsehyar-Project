@@ -12,5 +12,7 @@ urlpatterns = [
     path("professor/profile", views.ProfessorProfile, name="professor_profile"),
     path("professor/classes/<str:p_code>/<str:u_code>", views.ProfessorLessonList, name="professor_lessons"),
     path('professor/lesson/details/<str:code>', views.LessonDetails, name="lesson_detail"),
-    path("search", views.LessonSearchView, name="lesson_search")
+    path("search", views.LessonSearchView, name="lesson_search"),
+    path("choosing_lesson", views.ChoosingLessonFormView, name="choosing_lesson"),
+    path("saving", views.SavingTheChosenLessonView, name="save")
 ]
