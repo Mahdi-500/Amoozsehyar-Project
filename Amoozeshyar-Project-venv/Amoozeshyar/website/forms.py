@@ -1,6 +1,7 @@
 from django import forms
+from django.forms import formset_factory
 from django_jalali.db import models as jmodels
-from .models import student, professor, lesson, lesson_class, Grade, university
+from .models import student, professor, lesson, lesson_class
 
 class StudentForm(forms.ModelForm):
     class Meta:
@@ -182,20 +183,33 @@ class LessonClassFrom(forms.ModelForm):
         
 
 
-class GradeForm(forms.ModelForm):
-    class Meta:
-        model = Grade
-        fields = "__all__"
-        exclude = ['created', 'modified']
+class GradeForm(forms.Form):
 
+    first_name = forms.CharField(max_length=100, label="نام")
+    last_name = forms.CharField(max_length=150, label="نام خانوادگی")
+    student_id = forms.CharField(max_length=12, label="شماره دانشجویی")
+    score = forms.DecimalField(label="نمره", required=True, decimal_places=2 ,widget=forms.NumberInput(attrs={"step":0.25, "min":0, "max":20}))
     
     def clean(self):
         clean_data = super().clean()
-        score = clean_data.get["score"]
-
-        if 0 > score > 20:
-            raise forms.ValidationError("نمره باید بین 0 تا 20 باشد")
+        first_name = clean_data.get("first_name")
+        last_name = clean_data.get("last_name")
+        student_id = clean_data.get("student_id")
         
+        if not first_name.isalpha() or not last_name.isalpha():
+            raise forms.ValidationError("فقط حروف الفبا مجاز است")
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        field_f_name = self.fields['first_name']
+        field_l_name = self.fields['last_name']
+        field_student_id = self.fields["student_id"]
+
+        field_f_name.widget.attrs['readonly'] = True
+        field_l_name.widget.attrs["readonly"] = True
+        field_student_id.widget.attrs["readonly"] = True
+GradeFormset = formset_factory(GradeForm, extra=0)
+
 
 
 class LoginForm(forms.Form):

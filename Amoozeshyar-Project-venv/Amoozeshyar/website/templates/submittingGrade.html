@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}ثبت نمره{% endblock title %}
+
+{% block content %}
+    {% comment %} <form method="POST">
+        {% csrf_token %}
+        {{formset.management_form}}
+        {% for form in formset %}
+            {{form.student_id}} {{form.first_name}} {{form.last_name}} {{form.score}}
+            <br>
+            {% if form.errors %}
+                {{form.errors}}
+            {% endif %}
+
+        {% endfor %}
+        <button type="submit">ثبت نمره</button>
+    </form> {% endcomment %}
+
+    <form method="POST">
+        {% csrf_token %}
+        {{formset.management_form}}
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>شماره دانشجویی</th>
+                    <th>نام</th>
+                    <th>نام خانوادگی</th>
+                    <th>نمره</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for form in formset %}
+                    <tr>
+                        <!-- Render all hidden fields first -->
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        
+                        <!-- Display visible fields in table cells -->
+                        <td>{{ form.student_id }}</td>
+                        <td>{{ form.first_name }}</td>
+                        <td>{{ form.last_name }}</td>
+                        <td>{{ form.score }}</td>
+                    </tr>
+                    {% if form.errors %}
+                        <tr>
+                            <td colspan="4" class="error">
+                                {{ form.errors }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <br>
+        <button type="submit">ثبت نمره</button>
+        <br>
+    </form>
+
+
+{% endblock content %}

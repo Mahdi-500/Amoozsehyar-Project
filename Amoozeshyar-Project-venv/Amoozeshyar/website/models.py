@@ -228,20 +228,20 @@ class lesson_class(models.Model):
 
 
     def __str__(self):
-        return f'کلاس {self.lesson_code} با استاد {self.professor_name}'
+        return f'کلاس {self.lesson_code} با استاد {self.professor_name} با کد ارائه {self.class_code}'
     
 
 
 class Grade(models.Model):
     student_name = models.ForeignKey(student, verbose_name="دانجشو", on_delete=models.DO_NOTHING, related_name="grade")
     lesson_name = models.ForeignKey(lesson_class, verbose_name="درس", on_delete=models.DO_NOTHING, related_name="grade")
-    score = models.PositiveSmallIntegerField(blank=False, verbose_name="نمره")
+    score = models.DecimalField(max_digits=4, blank=False, decimal_places=2,verbose_name="نمره")
     modified = jmodels.jDateTimeField(auto_now=True, verbose_name="تاریخ تغییر")
     created = jmodels.jDateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
 
 
 class student_choosing_lesson(models.Model):
-    student_name = models.ForeignKey(student, on_delete=models.CASCADE, verbose_name="دانشجو", related_name="lesson")
+    student_name = models.ForeignKey(student, on_delete=models.CASCADE, verbose_name="دانشجو", related_name="lessons")
     chosen_class = models.ForeignKey(lesson_class,on_delete=models.CASCADE, verbose_name="درس", related_name="students")
     semester = models.SmallIntegerField(blank=False, default=0, verbose_name="نیمسال")
     

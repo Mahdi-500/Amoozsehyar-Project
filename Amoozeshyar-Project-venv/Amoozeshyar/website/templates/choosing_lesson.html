@@ -16,7 +16,7 @@
         <form method="POST" action="{% url 'website:save' %}">
             {% csrf_token %}
             {{form_choosing.as_p}}
-            <button>انتخاب</button>
+            <button type="submit">انتخاب</button>
         </form>
     {% endif %}
     

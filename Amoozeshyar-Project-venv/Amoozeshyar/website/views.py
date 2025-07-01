@@ -225,26 +225,81 @@ def ProfessorProfile(request):
 def ProfessorLessonList(request, p_code, u_code):
     professor_name = professor.objects.get(code=p_code)
     l_university = university.objects.get(code=u_code)
-    lesson_list = professor_name.classes.all()
-
+    temp_lesson_list = professor_name.classes.all()
+    
+    seen = set()
+    lesson_list = []
+    for i in temp_lesson_list:
+        if i.lesson_code in seen:
+            continue
+        else:
+            lesson_list.append(i)
+            seen.add(i.lesson_code)
+    request.session['p_code'] = p_code
     context = {
         "list":lesson_list,
         "l_university":l_university,
     }
-    
+
     return render(request, "professor/professor_lesson_list.html", context)
 
 
 
-def LessonDetails(request, code):
-    lesson_details = lesson.objects.get(code=code)
-    return render(request, "lesson_details.html", {"lesson":lesson_details})
+def LessonDetails(request, l_code):
+    professor_name = professor.objects.get(code=request.session["p_code"])
+    assigned_lessons = lesson_class.objects.filter(lesson_code=l_code, professor_name=professor_name)
+    lesson_details = []
+    for i in assigned_lessons:
+        lesson_details.append((i.lesson_day, i.class_code))
+    
+    context = {
+        "lesson":lesson_details,
+        "l_code":l_code,
+    }
+    return render(request, "lesson_details.html", context)
     
 
 
-def GradeFormView(request):
+def GradeFormView(request, l_code, class_code):
+    initail_data = []
+    student_data = {}
+    professor_name = professor.objects.get(code=request.session["p_code"])
+    lesson_info = lesson.objects.get(code=l_code)
+    lesson_class_data = lesson_class.objects.get(lesson_code=lesson_info, professor_name=professor_name, class_code=class_code)
+    
+    for j in student_choosing_lesson.objects.filter(chosen_class=lesson_class_data):
+            
+        student_data = {
+            "first_name":j.student_name.first_name,
+            "last_name":j.student_name.last_name,
+            "student_id":j.student_name.student_number,
+            "score":0
+        }
+        initail_data.append(student_data)
+
+
     if request.method == "POST":
-        form = GradeForm(request.POST)
+        formset = GradeFormset(data=request.POST)
+        
+        print(formset.error_messages)
+        if formset.is_valid():
+            for i in formset:
+                student_info = student.objects.get(student_number=i.cleaned_data["student_id"])
+                submitted_score = i.cleaned_data["score"]
+
+                Grade.objects.create(
+                    student_name=student_info,
+                    lesson_name=lesson_class_data,
+                    score=submitted_score
+                )
+            messages.success(request, "ثبت نمره با موفقیت انجام شد")
+            return redirect("website:main")
+        
+    else:
+        formset = GradeFormset(initial=initail_data)
+        return render(request, "submittingGrade.html", {"formset":formset})
+
+
 
 
 
