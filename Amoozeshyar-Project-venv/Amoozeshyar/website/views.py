@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User, Group
 from .models import *
 from .forms import *
+from .forms import semester as setting_semester
 
 # Create your views here.
 def MainView(request):
@@ -126,7 +127,7 @@ def LessonClassFromView(request):
             semester = form.cleaned_data["semester"]
             class_location = form.cleaned_data["university_location"]
 
-            if semester == None:
+            if semester == None or semester == " ":
                 set_semester(lesson_class, new_lesson_class)
                 semester = new_lesson_class.semester
 
@@ -354,36 +355,44 @@ def ChoosingLessonFormView(request):
         form_choosing = ChoosingLessonForm()
 
         result = []
+        result = []
         temp = []
         if form_searching.is_valid():
-            if form_searching.cleaned_data["query_lesson_code"] != None:
-                temp = lesson_class.objects.filter(Q(lesson_code=form_searching.cleaned_data["query_lesson_code"]) &
-                                                            Q(semester=form_searching.cleaned_data["query_lesson_semester"]))
-                for i in temp:
-                    result.append(i)
-            else:
-                if form_searching.cleaned_data["query_lesson_name"] != "":
-                    lessons = lesson.objects.filter(Q(name__contains=form_searching.cleaned_data["query_lesson_name"]))
-                
-                
-                for i in lessons:
-                    temp.append(lesson_class.objects.filter(Q(lesson_code=i.code) &
-                                                                Q(semester=form_searching.cleaned_data["query_lesson_semester"])))
-                for i in temp:
-                    for j in range(0, len(i)):
-                        result.append(i[j])
+            
+            student_info = student.objects.get(student_number=request.user.username)
+            semester = int(setting_semester())
+            data = {
+                "name": form_searching.cleaned_data["query_lesson_name"],
+                "code":form_searching.cleaned_data["query_lesson_code"],
+                "unit_type":form_searching.cleaned_data["query_unit_type"],
+                "lesson_type":form_searching.cleaned_data["query_lesson_type"],
+                "lesson_major":student_info.major
+            }
 
-            choices = []
-            for i in result:
-                choices.append((i.id,f"نام استاد: {i.professor_name}   ---   کد درس: {i.lesson_code.code}   ---   زمان برگزاری: {i.lesson_day} - {i.lesson_time}"))
-
-            form_choosing.fields["chosen_lesson"].choices = choices
-            request.session['lesson_choices'] = choices
+            filters = {
+                key: value
+                for key, value in data.items()
+                if value is not None
+            }
+            temp = lesson.objects.filter(**filters)
+            for i in temp:
+                if i.classes.all().exists():
+                    for j in range(0, len(i.classes.all())):
+                        if i.classes.all()[j].semester == semester:
+                            result.append(i.classes.all()[j])
 
             if result == []:
                 flag = True
             else:
                 flag = False
+                choices = []
+                for i in result:
+                    choices.append((i.id,f"نام درس: {i.lesson_code.name}   ---   نام استاد: {i.professor_name}   ---   کد درس: {i.lesson_code.code}   ---   زمان برگزاری: {i.lesson_day} - {i.lesson_time}"))
+
+                form_choosing.fields["chosen_lesson"].choices = choices
+                request.session['lesson_choices'] = choices
+                request.session["semester"] = setting_semester()
+
                 
             context = {
                 "form_searching": form_searching,
@@ -409,10 +418,165 @@ def SavingTheChosenLessonView(request):
         if form.is_valid():
             student_info = student.objects.get(student_number = request.user.username)
             class_info = lesson_class.objects.get(id=form.cleaned_data["chosen_lesson"])
-            student_choosing_lesson.objects.create(student_name=student_info,
-                                                            chosen_class=class_info,
-                                                            semester=form.cleaned_data["lesson_semester"])
-            messages.success(request, "درس با موفقیت انتخاب شد")
-            return redirect("website:choosing_lesson")
+
+            # if student_choosing_lesson.objects.filter(
+            #     student_name=student_info,
+            #     chosen_class=class_info,
+            #     semester=request.session.get("semester")
+            # ).exists():
+            #     messages.warning(request, "این درس را قبلا برداشته اید")
+            #     return redirect("website:choosing_lesson")
+            #else:
+            try:
+                student_choosing_lesson.objects.get(student_name=student_info, chosen_class=class_info, semester=request.session.get("semester"))
+                messages.warning(request, "این درس را قبلا برداشته اید")    # ! warning
+
+            except student_choosing_lesson.DoesNotExist:
+                temp = student_choosing_lesson.objects.filter(student_name=student_info)
+                flag = True
+            
+
+                # ? checking for duplicate lesson
+                duplicate_flag = False
+                for i in temp:
+                    if i.chosen_class.lesson_code == class_info.lesson_code:
+                        score = Grade.objects.filter(student_name=student_info, lesson_name=i.chosen_class).last()
+                        if score >= 10:
+                            duplicate_flag = True
+
+                if duplicate_flag:
+                    messages.error(request, "این درس را قبلا برداشته اید")  # ! error
+                    return redirect("website:choosin_lesson")
+                
+                
+
+                # ? checking if the student has pssed the requirements for that lesson
+                grade = ()
+                flag_passed_pishniaz = '0'
+                if class_info.lesson_code.pishniaz.all().exists():
+                    for i in class_info.lesson_code.pishniaz.all():     # ? iterates on all of the lesson pishniazes
+                        for j in student_choosing_lesson.objects.filter(student_name=student_info):     # ? finds the student
+                            if j.chosen_class.lesson_code==i:   # ? check's if this is the class we are looking for by checking the lesson code
+                                try:
+                                    student_grade = Grade.objects.get(student_name=student_info, lesson_name=j.chosen_class).score
+
+                                    if student_grade >= 10:
+                                        flag_passed_pishniaz = '1'
+                                    
+                                    grade += tuple(flag_passed_pishniaz)
+                                
+                                except Grade.DoesNotExist:
+                                    flag_passed_pishniaz = "1"
+                                    pass
+                
+                confirmation_of_passed_all_pishniazes = True
+                for i in range(0, len(grade) - 1):
+                    confirmation_of_passed_all_pishniazes &= bool(grade[i])
+                
+                if not confirmation_of_passed_all_pishniazes:
+                    messages.error(request, "ابتدا باید پیش نیاز درس را قبول بشوید")    # ! error
+                    return redirect("website:choosing_lesson")
+                
+
+                ### ? checking the maximum units allowed
+                
+
+                # ?? for summer semester
+                semester = request.session.get("semester")
+                max_unit = 8
+                if semester[3] == "3":
+                    flag = maximum_unit_allowed(request, student_info, class_info, max_unit)
+                    if flag:
+                        messages.error(request, f"تعداد واحد انتخابی از سقف تعداد واحد مجاز ({max_unit}) بیشتر است")    # ! error
+                        return redirect("website:choosing_lesson")
+                    else:
+                        student_choosing_lesson.objects.create(student_name=student_info,
+                                                                chosen_class=class_info,
+                                                                semester=request.session.get("semester"))
+                        messages.success(request, "درس با موفقیت انتخاب شد")    # + success
+                        return redirect("website:choosing_lesson")
+
+
+                # ?? for fall semester
+                max_unit = 20
+                if semester[3] == "1":
+                    new_semester = str(int(semester) - 9)    # ? privious semester (spring)
+                    try:
+                        privious_semester_student_classes = student_choosing_lesson.objects.filter(student_name=student_info, semester=new_semester)
+                        unit = 0
+                        score = 0
+                        for i in privious_semester_student_classes:
+                            for j in Grade.objects.filter(student_name=student_info, lesson_name=i):
+                                if j.score >= 10:
+                                    score += j.score
+                                    unit += j.lesson_name.lesson_code.unit
+
+                        if score / unit >= 17.00:
+                            max_unit = 24
+                        
+                    except student_choosing_lesson.DoesNotExist:
+                        pass
+
+                    flag = maximum_unit_allowed(request, student_info, class_info, max_unit)
+                    if flag:
+                        messages.error(request, f"تعداد واحد انتخابی از سقف تعداد واحد مجاز ({max_unit}) بیشتر است")    # ! error
+                        return redirect("website:choosing_lesson")
+                    else:
+                        student_choosing_lesson.objects.create(student_name=student_info,
+                                                                chosen_class=class_info,
+                                                                semester=request.session.get("semester"))
+                        messages.success(request, "درس با موفقیت انتخاب شد")    # + success
+                        return redirect("website:choosing_lesson")
+                    
+                    
+                # ?? for spring semester
+                elif semester[3] == "2":
+                    new_semester = str(int(semester) - 1)    # ? privious semester (spring)
+                    try:
+                        privious_semester_student_classes = student_choosing_lesson.objects.filter(student_name=student_info, semester=new_semester)
+                        unit = 0
+                        score = 0
+                        for i in privious_semester_student_classes:
+                            for j in Grade.objects.filter(student_name=student_info, lesson_name=i):
+                                if j.score >= 10:
+                                    score += j.score
+                                    unit += j.lesson_name.lesson_code.unit
+
+                        if score / unit >= 17.00:
+                            max_unit = 24
+                        
+                    except student_choosing_lesson.DoesNotExist:
+                        pass
+
+                    flag = maximum_unit_allowed(request, student_info, class_info, max_unit)
+                    if flag:
+                        messages.error(request, f"تعداد واحد انتخابی از سقف تعداد واحد مجاز ({max_unit}) بیشتر است")    # ! error
+                        return redirect("website:choosing_lesson")
+
+                    else:
+                        student_choosing_lesson.objects.create(student_name=student_info,
+                                                                chosen_class=class_info,
+                                                                semester=request.session.get("semester"))
+                        messages.success(request, "درس با موفقیت انتخاب شد")    # + success
+                        return redirect("website:choosing_lesson")
             
     return redirect("website:choosing_lesson")
+
+
+
+def maximum_unit_allowed(request, student_info, class_info, max_unit) -> bool:
+    try:
+        student_classes = student_choosing_lesson.objects.filter(student_name=student_info, semester=semester())
+        overall_units = 0
+        for i in student_classes:
+            overall_units += i.chosen_class.lesson_code.unit
+
+
+            if overall_units + class_info.lesson_code.unit > max_unit:
+                return True
+
+    except student_choosing_lesson.DoesNotExist:
+        student_choosing_lesson.objects.create(student_name=student_info,
+                                                            chosen_class=class_info,
+                                                            semester=request.session.get("semester"))
+    return False

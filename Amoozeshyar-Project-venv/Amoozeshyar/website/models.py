@@ -233,8 +233,8 @@ class lesson_class(models.Model):
 
 
 class Grade(models.Model):
-    student_name = models.ForeignKey(student, verbose_name="دانجشو", on_delete=models.DO_NOTHING, related_name="grade")
-    lesson_name = models.ForeignKey(lesson_class, verbose_name="درس", on_delete=models.DO_NOTHING, related_name="grade")
+    student_name = models.ForeignKey(student, verbose_name="دانشجو", on_delete=models.CASCADE, related_name="grade")
+    lesson_name = models.ForeignKey(lesson_class, verbose_name="درس", on_delete=models.CASCADE, related_name="grade")
     score = models.DecimalField(max_digits=4, blank=False, decimal_places=2,verbose_name="نمره")
     modified = jmodels.jDateTimeField(auto_now=True, verbose_name="تاریخ تغییر")
     created = jmodels.jDateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
@@ -244,6 +244,8 @@ class student_choosing_lesson(models.Model):
     student_name = models.ForeignKey(student, on_delete=models.CASCADE, verbose_name="دانشجو", related_name="lessons")
     chosen_class = models.ForeignKey(lesson_class,on_delete=models.CASCADE, verbose_name="درس", related_name="students")
     semester = models.SmallIntegerField(blank=False, default=0, verbose_name="نیمسال")
+    created = jmodels.jDateTimeField(auto_now_add=True, verbose_name="تاریخ انتخاب")
+    modified = jmodels.jDateTimeField(auto_now=True, verbose_name="تاریخ تغییر")
     
 
 
@@ -340,14 +342,18 @@ def set_semester(sender, instance, **kwargs):
     today_date_year = str(jmodels.jdatetime.date.today().year)
     
     if 11 <= today_date_month <= 12:
-        today_date_year += '2'
-
+        today_date_year[1:] += '2'
+        
     elif 1 <= today_date_month <= 3:
-        year = str(int(today_date_year) - 1)
+        year = str(int(today_date_year) - 1)[1:]
         today_date_year = year + "2"
 
     elif 6 <= today_date_month <= 10:
-        today_date_year += "1"
+        today_date_year[1:] += "1"
+    
+    elif today_date_month == 4 or today_date_month == 5:
+        year = str(int(today_date_year) - 1)
+        today_date_year = year + "3"
         
     instance.semester = int(today_date_year[1:])
 

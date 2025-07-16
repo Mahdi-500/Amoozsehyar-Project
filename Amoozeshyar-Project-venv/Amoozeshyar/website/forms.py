@@ -1,7 +1,28 @@
 from django import forms
 from django.forms import formset_factory
 from django_jalali.db import models as jmodels
-from .models import student, professor, lesson, lesson_class
+from .models import student, professor, lesson, lesson_class, major
+
+def semester() -> str: 
+    today_date_month = jmodels.jdatetime.date.today().month
+    today_date_year = str(jmodels.jdatetime.date.today().year)
+
+    if 11 <= today_date_month <= 12:
+        today_date_year[1:] += '2'
+        
+    elif 1 <= today_date_month <= 3:
+        year = str(int(today_date_year) - 1)[1:]
+        today_date_year = year + "2"
+
+    elif 6 <= today_date_month <= 10:
+        today_date_year[1:] += "1"
+
+    elif today_date_month == 4 or today_date_month == 5:
+        year = str(int(today_date_year) - 1)[1:]
+        today_date_year = year + "3"
+
+    return today_date_year
+
 
 class StudentForm(forms.ModelForm):
     class Meta:
@@ -128,12 +149,16 @@ class LessonForm(forms.ModelForm):
     def clean(self):
         clean_data = super().clean()
         name = clean_data.get("name")
+        # apply_to_all = clean_data.get("apply_to_all")
 
         for name in name.split(" "):
             if not name.isalpha() and not name.isalnum():
                 raise forms.ValidationError(" ترکیب عدد با حروف الفبا یا فقط حروف الفبا مجاز است")
             
-            
+        # if apply_to_all:
+        #     clean_data["lesson_major"] = major.objects.none()
+
+    #def save(self, commit)
 
 class LessonClassFrom(forms.ModelForm):
     class Meta:
@@ -220,65 +245,34 @@ class LoginForm(forms.Form):
 
 class LessonSearchForm(forms.Form):
 
-    LESSON_TYPE_CHOICES = [("", "----------------"), 
+    LESSON_TYPE_CHOICES = [(None, "----------------"), 
                         ("اصلی", "اصلی"),
                         ("پایه", "پایه"),
                         ("عمومی", "عمومی"),
                         ("تخصصی", "تخصصی"),
                         ("اختیاری", "اختیاری")]
 
-    UNIT_TYPE_CHOICES = [("", "----------------"),
+    UNIT_TYPE_CHOICES = [(None, "----------------"),
                         ("نظری", "نظری"),
                         ("نظری-عملی", "نظری - عملی"),
                         ("عملی", "عملی"),
                         ("آز", "آزمایشگاهی"),
                         ("کارآموزی", "کارآموزی")]
     
-    
-    today_date_month = jmodels.jdatetime.date.today().month
-    today_date_year = str(jmodels.jdatetime.date.today().year)
-    
-    if 11 <= today_date_month <= 12:
-        today_date_year[1:] += '2'
-        
-    elif 1 <= today_date_month <= 3:
-        year = str(int(today_date_year) - 1)[1:]
-        today_date_year = year + "2"
+    today_date_year = semester()
 
-    elif 6 <= today_date_month <= 10:
-        today_date_year[1:] += "1"
-    
-    elif today_date_month == 4 or today_date_month == 5:
-        year = str(int(today_date_year) - 1)[1:]
-        today_date_year = year + "3"
-    
     query_lesson_code = forms.IntegerField(label="کد درس", required=False)
-    query_lesson_name = forms.CharField(label="نام درس", required=False)
+    query_lesson_name = forms.CharField(label="نام درس", required=False, empty_value=None)
     query_lesson_semester= forms.CharField(label="نیمسال", initial= today_date_year, required=True)
     #query_lesson_location = forms.CharField(label="مکان برگذاری کلاس", required=False)
-    query_unit_type = forms.ChoiceField(choices=UNIT_TYPE_CHOICES, label="نوع واحد", required=False)
-    query_lesson_type = forms.ChoiceField(choices=LESSON_TYPE_CHOICES, label="نوع درس", required=False)
+    query_unit_type = forms.TypedChoiceField(choices=UNIT_TYPE_CHOICES, label="نوع واحد", required=False, empty_value=None)
+    query_lesson_type = forms.TypedChoiceField(choices=LESSON_TYPE_CHOICES, label="نوع درس", required=False, empty_value=None)
 
 
 
 class ChoosingLessonForm(forms.Form):
-
-    today_date_month = jmodels.jdatetime.date.today().month
-    today_date_year = str(jmodels.jdatetime.date.today().year)
-
-    if 11 <= today_date_month <= 12:
-        today_date_year[1:] += '2'
-        
-    elif 1 <= today_date_month <= 3:
-        year = str(int(today_date_year) - 1)[1:]
-        today_date_year = year + "2"
-
-    elif 6 <= today_date_month <= 10:
-        today_date_year[1:] += "1"
-
-    elif today_date_month == 4 or today_date_month == 5:
-        year = str(int(today_date_year) - 1)[1:]
-        today_date_year = year + "3"
+    today_date_year = semester()
         
     lesson_semester= forms.CharField(label="نیمسال", initial= today_date_year, required=False, widget=forms.HiddenInput())
     chosen_lesson = forms.ChoiceField(label="کلاس ها", widget=forms.RadioSelect, choices=[("default", "select")])
+
